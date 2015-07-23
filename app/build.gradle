@@ -1,0 +1,161 @@
+
+apply plugin: 'com.android.application'
+apply plugin: 'com.neenbedankt.android-apt'
+
+android {
+    compileSdkVersion 21
+    buildToolsVersion "21.1.0"
+
+    defaultConfig {
+        applicationId "com.argo.sdk.sample"
+        minSdkVersion 15
+        targetSdkVersion 21
+        versionCode 1
+        versionName "1.0.0"
+        multiDexEnabled true
+    }
+
+    signingConfigs {
+        debug {
+            storeFile file('keystore')
+            storePassword 'sample'
+            keyAlias 'Android'
+            keyPassword 'sample!'
+        }
+
+        release {
+            storeFile file('keystore')
+            storePassword 'sample'
+            keyAlias 'Android'
+            keyPassword 'sample!'
+        }
+    }
+
+    packagingOptions {
+        // Exclude file to avoid
+        // Error: Duplicate files during packaging of APK
+        exclude 'META-INF/services/javax.annotation.processing.Processor'
+        exclude 'README.txt'
+    }
+
+    lintOptions {
+        abortOnError false
+        disable 'InvalidPackage'
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_7
+        targetCompatibility JavaVersion.VERSION_1_7
+    }
+
+    buildTypes {
+        debug {
+            applicationIdSuffix '.debug'
+            apply plugin: 'signing'
+            apply plugin: 'checkstyle'
+            minifyEnabled false
+            zipAlignEnabled false // this is default for debug
+        }
+
+        release {
+            apply plugin: 'signing'
+            apply plugin: 'checkstyle'
+            minifyEnabled false
+            zipAlignEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+
+    }
+
+    //sourceSets for different channels
+    sourceSets {
+        main {
+            manifest.srcFile 'src/main/AndroidManifest.xml'
+            java.srcDirs = ['src/main/java']
+            resources.srcDirs = ['src/main/java']
+            aidl.srcDirs = ['src/main']
+            renderscript.srcDirs = ['src/main']
+            res.srcDirs = ['src/main/res']
+            assets.srcDirs = ['src/main/assets']
+        }
+
+        storeSTest {
+            assets.srcDirs = ['src/storeTest/assets']
+        }
+
+        storeSQQ {
+            assets.srcDirs = ['src/storeQQ/assets']
+        }
+
+        storeSBaidu {
+            assets.srcDirs = ['src/storeBaidu/assets']
+        }
+
+        storeS360 {
+            assets.srcDirs = ['src/store360/assets']
+        }
+    }
+
+    productFlavors {
+
+        storeDev {
+            signingConfig signingConfigs.release
+            versionName defaultConfig.versionName
+            manifestPlaceholders = [lbsAPIKey: "6105ca2732b45a174a68b48025e23da9"]
+        }
+
+        storeSTest {
+            signingConfig signingConfigs.release
+            versionName defaultConfig.versionName
+            applicationId 'com.inno.k12.test'
+            manifestPlaceholders = [lbsAPIKey: "083685246acc11eb0c8b5ea707a7a740"]
+        }
+
+        storeSQQ {
+            signingConfig signingConfigs.release
+            versionName defaultConfig.versionName
+            manifestPlaceholders = [lbsAPIKey: "f343664eee2f003b10aa016f3250e357"]
+        }
+
+        storeSBaidu {
+            signingConfig signingConfigs.release
+            versionName defaultConfig.versionName
+            manifestPlaceholders = [lbsAPIKey: "f343664eee2f003b10aa016f3250e357"]
+        }
+
+        storeS360 {
+            signingConfig signingConfigs.release
+            versionName defaultConfig.versionName
+            manifestPlaceholders = [lbsAPIKey: "f343664eee2f003b10aa016f3250e357"]
+        }
+    }
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+
+    // dagger
+    compile 'com.google.dagger:dagger:2.0.1'
+    apt 'com.google.dagger:dagger-compiler:2.0.1'
+    provided 'org.glassfish:javax.annotation:10.0-b28'
+
+    compile 'com.koushikdutta.async:androidasync:2.+'
+    // https://github.com/hdodenhof/CircleImageView
+    compile 'de.hdodenhof:circleimageview:1.3.0'
+    // https://github.com/Yalantis/Phoenix
+    compile 'com.yalantis:phoenix:1.2.1'
+    // https://github.com/daimajia/AndroidSwipeLayout
+    //compile 'com.android.support:recyclerview-v7:21.0.0'
+    //compile 'com.android.support:support-v4:20.+'
+    compile 'com.daimajia.swipelayout:library:1.2.0@aar'
+    // https://github.com/daimajia/NumberProgressBar
+    compile 'com.daimajia.numberprogressbar:library:1.2@aar'
+    // https://github.com/code-mc/loadtoast
+    compile 'net.steamcrafted:load-toast:1.0.8'
+    // https://github.com/chrisbanes/PhotoView
+
+    androidTestCompile 'junit:junit:4.11'
+    //androidTestCompile 'org.hamcrest:hamcrest-library:1.3'
+    //androidTestCompile 'org.mockito:mockito-core:1.9.5'
+    compile project(':sdk')
+}
