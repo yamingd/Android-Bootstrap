@@ -6,8 +6,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
-import timber.log.Timber;
-
 /**
  * Created by user on 7/17/15.
  */
@@ -22,6 +20,15 @@ public class DataIndexBuilder<T extends DataIndexBuilder.DataIndex> {
 
     }
 
+    public static interface DataIndexKeyGetter<T>{
+        /**
+         *
+         * @param o
+         * @return
+         */
+        String get(T o);
+    }
+
     public class DataItemValueComparator implements Comparator<T>{
 
         @Override
@@ -29,22 +36,27 @@ public class DataIndexBuilder<T extends DataIndexBuilder.DataIndex> {
             String lchsCode = lhs.getDataIndexKeyValue();
             String rchsCode = rhs.getDataIndexKeyValue();
 
-            char lFirstLetter = lchsCode.charAt(0);
-            char rFirstLetter = rchsCode.charAt(0);
-
-            if (lFirstLetter >= 65 && lFirstLetter <= 90){
-                if (rFirstLetter < 65 || rFirstLetter > 90){
-                    return -1;
-                }
-            }else{
-                if (rFirstLetter >= 65 && rFirstLetter <= 90){
-                    return 1;
-                }
-            }
-
-
-            return lchsCode.compareTo(rchsCode);
+            return DataIndexBuilder.this.compare(lchsCode, rchsCode);
         }
+    }
+
+    public int compare(String lchsCode, String rchsCode) {
+
+        char lFirstLetter = lchsCode.charAt(0);
+        char rFirstLetter = rchsCode.charAt(0);
+
+        if (lFirstLetter >= 65 && lFirstLetter <= 90){
+            if (rFirstLetter < 65 || rFirstLetter > 90){
+                return 1;
+            }
+        }else{
+            if (rFirstLetter >= 65 && rFirstLetter <= 90){
+                return -1;
+            }
+        }
+
+
+        return lchsCode.compareTo(rchsCode);
     }
 
     public class DataIndexMarkEntry implements Map.Entry<String, Integer>{
@@ -97,6 +109,65 @@ public class DataIndexBuilder<T extends DataIndexBuilder.DataIndex> {
      * 分组
      * @return
      */
+    public DataIndexBuilder group(final DataIndexKeyGetter<T> getter){
+        keyList.clear();
+        indexMark.clear();
+
+        if (this.dataList == null){
+            return this;
+        }
+        Collections.sort(this.dataList, new Comparator<T>() {
+            @Override
+            public int compare(T litem, T ritem) {
+
+                String lchsCode = getter.get(litem);
+                String rchsCode = getter.get(ritem);
+
+                return DataIndexBuilder.this.compare(lchsCode, rchsCode);
+            }
+        });
+
+        //Timber.d("%s, ######### this.dataList=%s", this, this.dataList);
+
+        int len = dataList.size();
+        int prevc = 0;
+        for (int i = 0; i < len; i++) {
+            String keyValue = getter.get(dataList.get(i));
+            prevc = prepareIndex(prevc, i, keyValue);
+        }
+
+        //Timber.d("indexMark size: %d", indexMark.size());
+
+        Collections.sort(keyList);
+
+        return this;
+    }
+
+    public int prepareIndex(int prevc, int i, String keyValue) {
+        char c = keyValue.charAt(0);
+        if (c < 65 || c > 90) {
+            c = 35; // "#"
+        }
+        String k = String.valueOf(c);
+        if (!keyList.contains(k)){
+            keyList.add(k);
+        }
+
+        if (c != prevc){
+            DataIndexMarkEntry entry = new DataIndexMarkEntry(k, -1);
+            indexMark.add(entry);
+            prevc = c;
+        }
+
+        DataIndexMarkEntry entry = new DataIndexMarkEntry(k, i);
+        indexMark.add(entry);
+        return prevc;
+    }
+
+    /**
+     * 分组
+     * @return
+     */
     public DataIndexBuilder group(){
         keyList.clear();
         indexMark.clear();
@@ -105,31 +176,16 @@ public class DataIndexBuilder<T extends DataIndexBuilder.DataIndex> {
             return this;
         }
         Collections.sort(this.dataList, this.comparator);
+        //Timber.d("%s, ######### this.dataList=%s", this, this.dataList);
 
         int len = dataList.size();
         int prevc = 0;
         for (int i = 0; i < len; i++) {
             String keyValue = dataList.get(i).getDataIndexKeyValue();
-            char c = keyValue.charAt(0);
-            if (c < 65 || c > 90) {
-                c = 35; // "#"
-            }
-            String k = String.valueOf(c);
-            if (!keyList.contains(k)){
-                keyList.add(k);
-            }
-
-            if (c != prevc){
-                DataIndexMarkEntry entry = new DataIndexMarkEntry(k, -1);
-                indexMark.add(entry);
-                prevc = c;
-            }
-
-            DataIndexMarkEntry entry = new DataIndexMarkEntry(k, i);
-            indexMark.add(entry);
+            prevc = prepareIndex(prevc, i, keyValue);
         }
 
-        Timber.d("indexMark size: %d", indexMark.size());
+        //Timber.d("indexMark size: %d", indexMark.size());
 
         Collections.sort(keyList);
 
@@ -215,9 +271,6 @@ public class DataIndexBuilder<T extends DataIndexBuilder.DataIndex> {
      * @param list
      */
     public DataIndexBuilder setRecords(List<T> list){
-        if (dataList != null){
-            dataList.clear();
-        }
         dataList = list;
         return this;
     }

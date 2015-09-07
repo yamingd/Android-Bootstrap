@@ -3,8 +3,11 @@ package com.argo.sdk.providers;
 import android.content.Context;
 
 import com.argo.sdk.AppSession;
+import com.argo.sdk.BootConstants;
 import com.umeng.analytics.AnalyticsConfig;
 import com.umeng.analytics.MobclickAgent;
+import com.umeng.update.UmengUpdateAgent;
+import com.umeng.update.UpdateConfig;
 
 import java.util.Map;
 
@@ -19,6 +22,8 @@ public class UmengTrackProvider {
 
     private Context context;
     private AppSession appSession;
+    private String appId;
+    private String channel;
     private boolean enabled;
 
     public UmengTrackProvider(Context context, AppSession appSession) {
@@ -29,20 +34,30 @@ public class UmengTrackProvider {
     }
 
     private void init(){
-        enabled = appSession.getConfigValue("AppUMengEnable", false);
+//        enabled = appSession.getConfigValue("AppUMengEnable", false);
+        enabled = true;
         if (enabled){
-            String appId = appSession.getConfigValue("AppUMengId", "");
-            String channel = appSession.getConfigValue("Channel", "");
+            appId = appSession.getConfigValue("AppUMengId", "");
+            channel = appSession.getConfigValue("Channel", "");
 
             AnalyticsConfig.setAppkey(appId);
             AnalyticsConfig.setChannel(channel);
 
             MobclickAgent.setCatchUncaughtExceptions(true);
-            MobclickAgent.setDebugMode(appSession.isDebug());
+            MobclickAgent.setDebugMode(BootConstants.DEBUG);
             MobclickAgent.updateOnlineConfig(this.context);
         }
 
-        Timber.i("Umeng init. enabled=%s", enabled);
+        Timber.i("Umeng init. enabled=%s, channel=%s", enabled, channel);
+    }
+
+    public void startAutoUpdate(Context view){
+        UmengUpdateAgent.setUpdateAutoPopup(true);
+        UmengUpdateAgent.setAppkey(appId);
+        UmengUpdateAgent.setChannel(channel);
+        UpdateConfig.setDebug(true);
+
+        UmengUpdateAgent.update(view);
     }
 
     public boolean isEnabled() {

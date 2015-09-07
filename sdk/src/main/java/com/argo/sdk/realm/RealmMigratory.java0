@@ -1,0 +1,25 @@
+//package com.inno.sdk.realm;
+//
+//import io.realm.Realm;
+//import io.realm.RealmMigration;
+//
+///**
+// * Created by user on 6/19/15.
+// */
+//public final class RealmMigratory {
+//
+//    public static class MigrationImpl implements RealmMigration{
+//
+//        private int toVer;
+//
+//        public MigrationImpl(int toVer){
+//            this.toVer = toVer;
+//        }
+//
+//        @Override
+//        public long execute(Realm realm, long version) {
+//            return this.toVer;
+//        }
+//    }
+//
+//}

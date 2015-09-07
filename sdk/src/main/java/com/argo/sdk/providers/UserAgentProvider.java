@@ -6,6 +6,7 @@ import android.os.Build;
 import android.telephony.TelephonyManager;
 
 import com.argo.sdk.AppSession;
+import com.argo.sdk.BootConstants;
 import com.argo.sdk.util.Strings;
 
 import java.lang.reflect.Method;
@@ -40,8 +41,6 @@ import timber.log.Timber;
  */
 public class UserAgentProvider implements Provider<String> {
 
-    public static String APP_NAME = "K12";
-
     ApplicationInfo appInfo;
     PackageInfo info;
     TelephonyManager telephonyManager;
@@ -66,7 +65,7 @@ public class UserAgentProvider implements Provider<String> {
             synchronized (UserAgentProvider.class) {
                 if (userAgent == null) {
                     String channel = appSession.getConfigValue("Channel", "Store");
-                    String appName = appSession.getConfigValue("AppName", APP_NAME);
+                    String appName = appSession.getConfigValue("AppName", BootConstants.APP_NAME);
 
                     userAgent = String.format("%s.%s/%s (Android %s; %s %s / %s %s; %s; %s)",
                             appName,

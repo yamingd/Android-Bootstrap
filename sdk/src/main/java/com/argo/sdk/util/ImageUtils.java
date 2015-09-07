@@ -2,11 +2,10 @@ package com.argo.sdk.util;
 
 
 import android.app.ActivityManager;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
-import android.database.Cursor;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -14,11 +13,17 @@ import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.RectF;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Looper;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
+
+import com.argo.sdk.ui.ImageRecyclable;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -43,7 +48,9 @@ import static android.graphics.PorterDuff.Mode.DST_IN;
  */
 public final class ImageUtils {
 
-    public static final String JPEG = ".jpeg";
+
+
+    public static final String TYPE_NAME = ".jpeg";
 
     /**
      * This is a utility class.
@@ -93,6 +100,60 @@ public final class ImageUtils {
     }
 
     /**
+     *
+     * @param resources
+     * @param resId
+     * @param width
+     * @param height
+     * @return
+     */
+    public static Bitmap getBitmap(final Resources resources, int resId, int width, int height){
+
+        BitmapFactory.Options bitmapOps = new BitmapFactory.Options();
+        bitmapOps.inJustDecodeBounds = true;
+        BitmapFactory.decodeResource(resources, resId, bitmapOps);
+
+        calculateInSampleSize(width, height, bitmapOps.outWidth, bitmapOps.outHeight, bitmapOps);
+
+        Timber.d("getBitmap, resId=%s, width=%s, height=%s, owidth=%s, oheight=%s sampleSize=%s",
+                resId, width, height, bitmapOps.outWidth, bitmapOps.outHeight,  bitmapOps.inSampleSize);
+
+        Bitmap bitmap = BitmapFactory.decodeResource(resources, resId, bitmapOps);
+        return bitmap;
+    }
+
+    /**
+     *
+     * @param resources
+     * @param resId
+     * @return
+     */
+    public static Bitmap getBitmap(final Resources resources, int resId, int sampleSize){
+
+        BitmapFactory.Options bitmapOps = new BitmapFactory.Options();
+        bitmapOps.inJustDecodeBounds = false;
+        bitmapOps.inSampleSize = sampleSize;
+        Bitmap bitmap = BitmapFactory.decodeResource(resources, resId, bitmapOps);
+        return bitmap;
+    }
+
+    /**
+     *
+     * inputStream = context.getContentResolver().openInputStream(uri);
+     *
+     * @param inputStream
+     * @param sampleSize
+     * @return
+     */
+    public static Bitmap getBitmap(final InputStream inputStream, final int sampleSize){
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inDither = false;
+        options.inSampleSize = sampleSize;
+        Bitmap bitmap = BitmapFactory.decodeStream(inputStream, null, options);
+        return bitmap;
+    }
+
+    /**
      * Get size of image
      *
      * @param imagePath
@@ -122,6 +183,36 @@ public final class ImageUtils {
     }
 
     /**
+     * 获取本地图片
+     * @param inputStream
+     * @return
+     * @throws FileNotFoundException
+     */
+    public static Point getSize(final InputStream inputStream) throws FileNotFoundException {
+
+        //InputStream inputStream = context.getContentResolver().openInputStream(uri);
+
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+
+        try {
+            BitmapFactory.decodeStream(inputStream, null, options);
+            return new Point(options.outWidth, options.outHeight);
+        } catch (final Exception e) {
+            Timber.e(e, "Could not get size.");
+            return null;
+        } finally {
+            if (inputStream != null) {
+                try {
+                    inputStream.close();
+                } catch (final IOException e) {
+                    Timber.d(e, "Could not get size.");
+                }
+            }
+        }
+    }
+
+    /**
      * Get bitmap with maximum height or width
      *
      * @param imagePath
@@ -130,18 +221,7 @@ public final class ImageUtils {
      * @return image
      */
     public static Bitmap getBitmap(final String imagePath, final int width, final int height) {
-        final Point size = getSize(imagePath);
-        int currWidth = size.x;
-        int currHeight = size.y;
-
-        int scale = 1;
-        while (currWidth >= width || currHeight >= height) {
-            currWidth /= 2;
-            currHeight /= 2;
-            scale *= 2;
-        }
-
-        return getBitmap(imagePath, scale);
+        return getBitmap(new File(imagePath), width, height);
     }
 
     /**
@@ -153,7 +233,14 @@ public final class ImageUtils {
      * @return image
      */
     public static Bitmap getBitmap(final File image, final int width, final int height) {
-        return getBitmap(image.getAbsolutePath(), width, height);
+
+        BitmapFactory.Options bitmapOps = new BitmapFactory.Options();
+        bitmapOps.inJustDecodeBounds = true;
+        decodeBitmap(image, bitmapOps);
+
+        calculateInSampleSize(width, height, bitmapOps.outWidth, bitmapOps.outHeight, bitmapOps);
+
+        return getBitmap(image.getAbsolutePath(), bitmapOps.inSampleSize);
     }
 
     /**
@@ -225,18 +312,38 @@ public final class ImageUtils {
 
     // 将Bitmap转换成InputStream
     public static InputStream bitmap2InputStream(Bitmap bm) {
+        //final int byteCount = bm.getByteCount();
+        //Timber.d("bitmap save0, length=%s bytes", byteCount);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        bm.compress(Bitmap.CompressFormat.JPEG, 100, baos);
-        InputStream is = new ByteArrayInputStream(baos.toByteArray());
+        bm.compress(Bitmap.CompressFormat.JPEG, 80, baos);
+        final byte[] buf = baos.toByteArray();
+        InputStream is = new ByteArrayInputStream(buf);
+        //Timber.d("bitmap save1, length=%s bytes", buf.length);
         return is;
     }
 
     // 将Bitmap转换成InputStream
     public static InputStream bitmap2InputStream(Bitmap bm, int quality) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        bm.compress(Bitmap.CompressFormat.PNG, quality, baos);
+        bm.compress(Bitmap.CompressFormat.JPEG, quality, baos);
         InputStream is = new ByteArrayInputStream(baos.toByteArray());
         return is;
+    }
+
+    /**
+     *
+     * @return
+     */
+    public static File getImageSavePath(){
+        String name = System.currentTimeMillis() / 1000 + TYPE_NAME;
+        if (IMAGE_ROOT_FILE == null){
+            IMAGE_ROOT_FILE = new File(SDCardUtils.ROOT_FOLDER, "image");
+            if (!IMAGE_ROOT_FILE.exists()){
+                IMAGE_ROOT_FILE.mkdirs();
+            }
+        }
+        File file = new File(IMAGE_ROOT_FILE, name);
+        return file;
     }
 
     static File IMAGE_ROOT_FILE = null;
@@ -245,17 +352,20 @@ public final class ImageUtils {
      * @param source
      * @return
      */
-    public static File saveImageTemp(final Context context, final InputStream source, final String type){
+    public static File saveImageTemp(final InputStream source, final String type){
         String name = System.currentTimeMillis() / 1000 + type;
         if (IMAGE_ROOT_FILE == null){
-            IMAGE_ROOT_FILE = new File(context.getFilesDir(), "image");
+            IMAGE_ROOT_FILE = new File(SDCardUtils.ROOT_FOLDER, "image");
+            if (!IMAGE_ROOT_FILE.exists()){
+                IMAGE_ROOT_FILE.mkdirs();
+            }
         }
         File file = new File(IMAGE_ROOT_FILE, name);
         BufferedSink sink = null;
         try {
             sink = Okio.buffer(Okio.sink(file));
-            sink.writeAll(Okio.source(source));
-            Timber.d("file size: %d kb", file.length() / 1024);
+            long size = sink.writeAll(Okio.source(source));
+            //Timber.d("file size: %d bytes, %s", size, file);
             return file;
         } catch (FileNotFoundException e) {
             return null;
@@ -282,11 +392,12 @@ public final class ImageUtils {
      */
     public static File saveImageTemp(final Context context, final Bitmap bitmap){
         InputStream source = bitmap2InputStream(bitmap);
-        return saveImageTemp(context, source, JPEG);
+        return saveImageTemp(source, TYPE_NAME);
     }
 
-    public static final int compressMaxSizeOut = 500; // 500k
+    public static final int compressMaxSizeOut = 500 * 1024; // 500k
     public static final int compressStep = 5;
+    public static final int compressGag = 50 * 1024;
 
     /**
      * 最大大小为500K
@@ -318,10 +429,18 @@ public final class ImageUtils {
      * @return
      */
     public static Bitmap compress(final File file, int width, int quality, int maxSize){
+        int osize = (int)(file.length());
+        if (osize - maxSize <= compressGag || maxSize - osize <= compressGag){
+            //在50K范围内可以不压缩
+            return null;
+        }
 
+        Timber.d("ImageUtils compress file: %s", file);
         BitmapFactory.Options bitmapOps = new BitmapFactory.Options();
         bitmapOps.inJustDecodeBounds = true;
         decodeBitmap(file, bitmapOps);
+
+        Timber.d("ImageUtils width: %d, height: %d", bitmapOps.outWidth, bitmapOps.outHeight);
 
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         try {
@@ -335,25 +454,199 @@ public final class ImageUtils {
                 return null;
             }
 
-            Timber.d("bitmap size: %d kb", bitmap.getByteCount() / 1024);
+            Timber.d("ImageUtils bitmap size: %d bytes", bitmap.getByteCount());
             bitmap.compress(Bitmap.CompressFormat.JPEG, quality, os);
             bitmap.recycle();
 
-            if (os.toByteArray().length / 1024 > maxSize) {
+            final byte[] bytes = os.toByteArray();
+            final int length = bytes.length;
+            final int diff = length >= maxSize ? length - maxSize : maxSize - length;
+            if (diff > compressGag) {
                 os.close();
                 return compress(file, maxSize, quality - compressStep, maxSize);
             } else {
-                Timber.d("decode out size: %d kb", os.toByteArray().length / 1024);
-                Bitmap ret = BitmapFactory.decodeStream(new ByteArrayInputStream(os.toByteArray()));
+                Timber.d("ImageUtils decode out size: %d bytes", length);
+                Bitmap ret = BitmapFactory.decodeStream(new ByteArrayInputStream(bytes));
                 return ret;
             }
 
         } catch (OutOfMemoryError ignore) {
             return compress(file, maxSize, quality - compressStep, maxSize);
         } catch (IOException ignore) {
-            Timber.d(ignore, "compress ignore error");
+            Timber.d(ignore, "ImageUtils compress ignore error");
             return compress(file, maxSize, quality - compressStep, maxSize);
         } finally {
+            try {
+                os.close();
+            } catch (IOException ignore) {
+            }
+        }
+    }
+
+    /**
+     * 压缩图片
+     * @param file
+     * @param maxSize
+     * @param quality
+     * @return
+     */
+    public static File compressFile(final File file, int width, int height, int quality, int maxSize, boolean verbose){
+        int osize = (int)(file.length());
+        int diff = osize > maxSize ? osize - maxSize : maxSize - osize;
+        if (diff <= compressGag){
+            //在50K范围内可以不压缩
+            return file;
+        }
+
+        if (verbose) {
+            Timber.d("ImageUtils compress file: %s", file);
+        }
+        BitmapFactory.Options bitmapOps = new BitmapFactory.Options();
+        bitmapOps.inJustDecodeBounds = true;
+        decodeBitmap(file, bitmapOps);
+
+        if (verbose) {
+            Timber.d("ImageUtils width: %d, height: %d", bitmapOps.outWidth, bitmapOps.outHeight);
+        }
+
+        Bitmap bitmap = null;
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        try {
+
+            calculateInSampleSize(width, height,
+                    bitmapOps.outWidth, bitmapOps.outHeight,
+                    bitmapOps);
+
+            File outFile = null;
+
+            bitmap = decodeBitmap(file, bitmapOps);
+            if (bitmap == null) {
+                Timber.e("ImageUtils compressFile, bitmap is NULL");
+                return null;
+            }
+
+            while (outFile == null && quality > 0) {
+
+                bitmap.compress(Bitmap.CompressFormat.JPEG, quality, os);
+                //bitmap.recycle();
+
+                final int length = os.size();
+                diff = length - maxSize;
+
+                if (verbose) {
+                    Timber.d("ImageUtils bitmap size: %d bytes, quality: %d, diff: %d bytes", length, quality, diff);
+                }
+
+                if (diff > compressGag) {
+                    os.reset();
+                    quality = quality - compressStep;
+                } else {
+                    if (verbose) {
+                        Timber.d("ImageUtils decode out size: %d bytes", length);
+                    }
+                    outFile = new File(file.getAbsolutePath() + ".500" + TYPE_NAME);
+                    InputStream is = new ByteArrayInputStream(os.toByteArray());
+                    inputStreamToFile(outFile, is);
+                }
+            }
+
+            return outFile;
+
+        } catch (OutOfMemoryError ignore) {
+            return compressFile(file, width, height, quality - compressStep, maxSize, verbose);
+        } finally {
+            if (bitmap != null){
+                bitmap.recycle();
+            }
+            try {
+                os.close();
+            } catch (IOException ignore) {
+            }
+        }
+    }
+
+    /**
+     * 压缩图片
+     * @param uri
+     * @param maxSize
+     * @param quality
+     * @return
+     */
+    public static File compressUri(final  Context context, final Uri uri, int width, int height, int quality, int maxSize, boolean verbose) throws FileNotFoundException {
+
+        InputStream inputStream = context.getContentResolver().openInputStream(uri);
+
+        BitmapFactory.Options bitmapOps = new BitmapFactory.Options();
+        bitmapOps.inJustDecodeBounds = true;
+        decodeBitmap(inputStream, bitmapOps);
+
+        if (verbose) {
+            Timber.d("ImageUtils width: %d, height: %d", bitmapOps.outWidth, bitmapOps.outHeight);
+        }
+
+        int diff = 0;
+        Bitmap bitmap = null;
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+
+        try {
+
+            calculateInSampleSize(width, height,
+                    bitmapOps.outWidth, bitmapOps.outHeight,
+                    bitmapOps);
+
+            File outFile = null;
+
+            inputStream = context.getContentResolver().openInputStream(uri);
+            bitmap = decodeBitmap(inputStream, bitmapOps);
+            if (bitmap == null) {
+                Timber.e("ImageUtils compressStream, bitmap is NULL, %s", outFile);
+                return null;
+            }
+
+            boolean done = false;
+            while (!done && quality > 0) {
+
+                bitmap.compress(Bitmap.CompressFormat.JPEG, quality, os);
+                //bitmap.recycle();
+
+                final int length = os.size();
+                diff = length - maxSize;
+
+                if (verbose) {
+                    Timber.d("ImageUtils bitmap size: %d bytes, quality: %d, diff: %d bytes", length, quality, diff);
+                }
+
+                if (diff > compressGag) {
+                    os.reset();
+                    quality = quality - compressStep;
+                } else {
+                    if (verbose) {
+                        Timber.d("ImageUtils decode out size: %d bytes", length);
+                    }
+                    InputStream is = new ByteArrayInputStream(os.toByteArray());
+                    outFile = getImageSavePath();
+                    inputStreamToFile(outFile, is);
+                    done = true;
+                }
+            }
+
+            return outFile;
+
+        } catch (OutOfMemoryError ignore) {
+            return compressUri(context, uri, width, height, quality - compressStep, maxSize, verbose);
+        } catch (IOException e) {
+            return null;
+        } finally {
+            if (bitmap != null){
+                bitmap.recycle();
+            }
+            if (inputStream != null){
+                try {
+                    inputStream.close();
+                } catch (IOException e) {
+
+                }
+            }
             try {
                 os.close();
             } catch (IOException ignore) {
@@ -365,7 +658,15 @@ public final class ImageUtils {
         return BitmapFactory.decodeFile(file.getPath(), bitmapOps);
     }
 
-    static void calculateInSampleSize(int reqWidth, int reqHeight, int width, int height,
+    static Bitmap decodeBitmap(InputStream inputStream, BitmapFactory.Options bitmapOps) {
+        return BitmapFactory.decodeStream(inputStream, null, bitmapOps);
+    }
+
+    static Bitmap decodeBitmap(byte[] bytes, BitmapFactory.Options bitmapOps) {
+        return BitmapFactory.decodeByteArray(bytes, 0, bytes.length, bitmapOps);
+    }
+
+    public static void calculateInSampleSize(int reqWidth, int reqHeight, int width, int height,
                                       BitmapFactory.Options options) {
         int sampleSize = 1;
         if (height > reqHeight || width > reqWidth) {
@@ -385,7 +686,7 @@ public final class ImageUtils {
         options.inJustDecodeBounds = false;
     }
 
-    static void inputStreamToFile(File file, InputStream is) {
+    public static void inputStreamToFile(File file, InputStream is) {
         try {
             OutputStream os = new FileOutputStream(file);
             byte[] buffer = new byte[1024];
@@ -431,15 +732,23 @@ public final class ImageUtils {
      * @param uri
      * @return
      */
-    public static String resolveImagePath(Context context, Uri uri) {
-        ContentResolver contentResolver = context.getContentResolver();
-        Cursor cursor = contentResolver.query(uri, null, null, null, null);
-        String photoPath = null;
-        if (cursor != null) {
-            cursor.moveToFirst();
-            photoPath = cursor.getString(1); // 图片文件路径
+    public static File resolveImagePath(Context context, Uri uri) {
+        InputStream inputStream = null;
+        try {
+            inputStream = context.getContentResolver().openInputStream(uri);
+            return saveImageTemp(inputStream, TYPE_NAME);
+        } catch (FileNotFoundException e) {
+            Timber.e(e, "placeImage Error. %s", uri);
+            return null;
+        }finally {
+            if (inputStream != null){
+                try {
+                    inputStream.close();
+                } catch (IOException e) {
+                    Timber.e(e, "placeImage Error. %s", uri);
+                }
+            }
         }
-        return photoPath;
     }
 
     /**
@@ -460,28 +769,72 @@ public final class ImageUtils {
                 bitmap = (Bitmap) bundle.get("data"); //get bitmap
                 photoFile = saveImageTemp(context, bitmap);
                 bitmap.recycle();
+                bitmap = getBitmap(photoFile, maxWidth, maxWidth);
             }else{
                 return null;
             }
         } else {
+
             Timber.d("uri=%s", uri.toString());
-            ContentResolver contentResolver = context.getContentResolver();
-            Cursor cursor = contentResolver.query(uri, null, null, null, null);
-            if (cursor != null) {
-                cursor.moveToFirst();
-                photoFile = new File(cursor.getString(1)); // 图片文件路径
-            }else{
+            InputStream inputStream = null;
+            try {
+                inputStream = context.getContentResolver().openInputStream(uri);
+                photoFile = saveImageTemp(inputStream, TYPE_NAME);
+                bitmap = getBitmap(photoFile, maxWidth, maxWidth);
+            } catch (FileNotFoundException e) {
+                Timber.e(e, "placeImage Error. %s", uri);
                 return null;
+            }finally {
+                if (inputStream != null){
+                    try {
+                        inputStream.close();
+                    } catch (IOException e) {
+                        Timber.e(e, "placeImage Error. %s", uri);
+                    }
+                }
             }
         }
 
-        imageView.destroyDrawingCache();
-
-        /* 将Bitmap设定到ImageView */
-        bitmap = getBitmap(photoFile, maxWidth, maxWidth);
+        recycle(imageView);
         imageView.setImageBitmap(bitmap);
 
         return photoFile;
     }
+
+    public static void recycle(ImageView imageView){
+        if (imageView == null){
+            return;
+        }
+
+        Drawable drawable = imageView.getDrawable();
+        if (drawable instanceof BitmapDrawable) {
+            BitmapDrawable bitmapDrawable = (BitmapDrawable) drawable;
+            Bitmap bitmap = bitmapDrawable.getBitmap();
+            bitmap.recycle();
+        }
+    }
+
+    public static void recycleAll(ViewGroup layout, boolean includeBackground) {
+        for (int i = 0; i < layout.getChildCount(); i++) {
+            //获得该布局的所有子布局
+            View subView = layout.getChildAt(i);
+            //判断子布局属性，如果还是ViewGroup类型，递归回收
+            if (subView instanceof ViewGroup) {
+                //递归回收
+                recycleAll((ViewGroup)subView, includeBackground);
+            } else {
+                //是Imageview的子例
+                if (subView instanceof ImageRecyclable) {
+                    //回收占用的Bitmap
+                    recycle((ImageView) subView);
+                    //如果flagWithBackgroud为true,则同时回收背景图
+                    if (includeBackground) {
+                        recycle((ImageView)subView);
+                    }
+                }
+            }
+        }
+    }
+
 }
 

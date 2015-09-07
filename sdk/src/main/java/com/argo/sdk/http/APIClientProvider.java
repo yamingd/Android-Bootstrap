@@ -1,15 +1,16 @@
 package com.argo.sdk.http;
 
 import android.content.Context;
+import android.net.wifi.WifiManager;
+import android.support.v4.util.ArrayMap;
 import android.webkit.MimeTypeMap;
 
+import com.argo.sdk.providers.UserAgentProvider;
 import com.google.protobuf.ByteString;
-import com.argo.sdk.ApiError;
 import com.argo.sdk.AppSession;
 import com.argo.sdk.cache.CacheProvider;
 import com.argo.sdk.cache.CacheWriter;
 import com.argo.sdk.protobuf.PAppResponse;
-import com.argo.sdk.providers.UserAgentProvider;
 import com.jakewharton.disklrucache.DiskLruCache;
 import com.squareup.okhttp.Call;
 import com.squareup.okhttp.Callback;
@@ -46,7 +47,24 @@ import timber.log.Timber;
 public class APIClientProvider {
 
     public static final MediaType MEDIA_TYPE_DEFAULT = MediaType.parse("application/octet-stream");
+    public static final String HEADER_X_SIGN = "X-sign";
+    public static final String HEADER_ACCEPT = "Accept";
+    public static final String HEADER_USER_AGENT = "User-Agent";
+    public static final String APPLICATION_X_PROTOBUF = "application/x-protobuf";
+    public static final String X_TAG = "X-tag";
+
     public static APIClientProvider instance = null;
+
+    private final static Map<String, String> MIME = new ArrayMap<>();
+
+    static  {
+        MIME.put("pdf", "application/pdf");
+        MIME.put("zip", "application/zip");
+        MIME.put("gzip", "application/gzip");
+        MIME.put("mp4", "audio/mp4");
+        MIME.put("mp3", "audio/mpeg");
+        MIME.put("aac", "audio/aac");
+    }
 
     private AppSession appSession;
     private OkHttpClient client;
@@ -55,14 +73,21 @@ public class APIClientProvider {
     private String userAgent;
     private Context context;
     private CacheProvider cacheProvider;
+    private WifiManager wifiManager;
+    private WifiManager.WifiLock wifiLock;
+    private int securityTag = 16;
+    private List<ProtobufReponseCallBack> callBackList = new ArrayList<>();
 
-    public APIClientProvider(AppSession appSession, UserAgentProvider userAgentProvider, Context context, CacheProvider cacheProvider){
+    public APIClientProvider(AppSession appSession, UserAgentProvider userAgentProvider, Context context, CacheProvider cacheProvider, WifiManager wifiManager){
         this.appSession = appSession;
         this.headers = appSession.getHttpHeader().entrySet();
         this.client = new OkHttpClient();
         this.userAgent = userAgentProvider.get();
         this.context = context;
+        this.cacheProvider = cacheProvider;
+        this.wifiManager = wifiManager;
         this.baseUrl = appSession.getConfigValue("ApiBaseUrl", null);
+        this.wifiLock = wifiManager.createWifiLock(this.getClass().getName());
         this.configHttpClient();
         instance = this;
     }
@@ -84,13 +109,15 @@ public class APIClientProvider {
      * 设置Http Header
      * @param builder
      */
-    private void wrapHttpHeader(Request.Builder builder){
+    private void wrapHttpHeader(Request.Builder builder, String url){
         for (Map.Entry<String, String> item : this.headers){
             builder.addHeader(item.getKey(), item.getValue());
         }
-        appSession.getHttpHeader().entrySet();
-        builder.addHeader("Accept", "application/x-protobuf");
-        builder.addHeader("User-Agent", this.userAgent);
+        final String signRequest = appSession.signRequest(url);
+        builder.addHeader(HEADER_X_SIGN, signRequest);
+        builder.addHeader(HEADER_ACCEPT, APPLICATION_X_PROTOBUF);
+        builder.addHeader(HEADER_USER_AGENT, this.userAgent);
+        //Timber.e("signRequest: %s %s", url, signRequest);
     }
 
     public void resetHeaders(){
@@ -104,7 +131,12 @@ public class APIClientProvider {
      * @return
      */
     private HttpUrl buildUrl(String pathUrl, Map<String, Object> params){
-        String fullUrl = this.baseUrl + pathUrl;
+        String fullUrl = "";
+        if(pathUrl.contains(this.baseUrl)){
+            fullUrl = pathUrl;
+        }else{
+            fullUrl = this.baseUrl + pathUrl;
+        }
         HttpUrl.Builder hb = HttpUrl.parse(fullUrl).newBuilder();
         if (null != params){
             Set<String> keys = params.keySet();
@@ -124,7 +156,7 @@ public class APIClientProvider {
     private Request buildGetRequest(String url, Map<String, Object> params){
         HttpUrl fullUrl = buildUrl(url, params);
         Request.Builder builder = new Request.Builder().url(fullUrl);
-        wrapHttpHeader(builder);
+        wrapHttpHeader(builder, url);
         builder.tag(url);
         return builder.build();
     }
@@ -139,6 +171,9 @@ public class APIClientProvider {
             File tmp = (File) o;
             String extType = MimeTypeMap.getFileExtensionFromUrl(tmp.getAbsolutePath());
             String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extType);
+            if (mimeType == null){
+                mimeType = MIME.get(extType.toLowerCase());
+            }
             RequestBody file = RequestBody.create(MediaType.parse(mimeType), tmp);
             multipartBuilder.addFormDataPart(key, tmp.getName(), file);
             Timber.d("Media Type. %s, %s, %s", tmp, mimeType, file.contentType());
@@ -169,8 +204,23 @@ public class APIClientProvider {
             Set<String> keys = params.keySet();
             for (String key : keys){
                 Object o = params.get(key);
-                if (null !=o && o instanceof File){
+                if (null == o){
+                    continue;
+                }
+                if (o instanceof File){
                     hasFile = true;
+                    break;
+                }else if (o instanceof  List){
+                    List list = (List) o;
+                    for (int i = 0; i < list.size(); i++) {
+                        Object o2 = list.get(i);
+                        if (null != o2 && o2 instanceof File){
+                            hasFile = true;
+                            break;
+                        }
+                    }
+                }
+                if (hasFile){
                     break;
                 }
             }
@@ -219,43 +269,40 @@ public class APIClientProvider {
         }
 
         Request.Builder builder = new Request.Builder().url(fullUrl).post(body);
-        wrapHttpHeader(builder);
+        wrapHttpHeader(builder, pathUrl);
         return builder.build();
     }
 
+    public int getSecurityTag() {
+        return securityTag;
+    }
+
+    public void setSecurityTag(int securityTag) {
+        this.securityTag = securityTag;
+    }
+
+    public AppSession getAppSession() {
+        return appSession;
+    }
+
     /**
-     * 解析请求响应
-     * @param url
-     * @param response
-     * @return
+     * 注销、停止时调用
      */
-    private PAppResponse parseResponse(String url, Response response){
-        PAppResponse.Builder builder = PAppResponse.newBuilder();
-        try {
-            builder.mergeFrom(response.body().byteStream());
-        } catch (IOException e) {
-            Timber.e(e, "url: %s", url);
+    public void stopAll(String[] filterUrls){
+//        for (int i = 0; i < callBackList.size(); i++) {
+//            callBackList.get(i).onHttpCallStopEvent(filterUrls);
+//        }
+//        callBackList.clear();
+    }
+
+    public void releaseLock(){
+        if (this.wifiLock.isHeld()){
+            this.wifiLock.release();
         }
-        return builder.build();
     }
 
-    /**
-     * 构造网络失败响应对象
-     * @param msg
-     * @return
-     */
-    private PAppResponse failureResponse(String msg){
-        PAppResponse.Builder builder = PAppResponse.newBuilder();
-        builder.setCode(500);
-        builder.setMsg(msg);
-        return builder.build();
-    }
-
-    private PAppResponse okResponse(String msg){
-        PAppResponse.Builder builder = PAppResponse.newBuilder();
-        builder.setCode(200);
-        builder.setMsg(msg);
-        return builder.build();
+    public void onResponseCallbackDone(ProtobufReponseCallBack callBack){
+        callBackList.remove(callBack);
     }
 
     /**
@@ -266,44 +313,18 @@ public class APIClientProvider {
      */
     public Call asyncGet(final String url, Map<String, Object> params, final APICallback apiCallback){
 
+        //RunningStatProvider.instance.printMemoryUsage("beforeAsyncGet");
+
         final Request request = buildGetRequest(url, params);
 
         Call call = client.newCall(request);
 
-        call.enqueue(new Callback() {
+        this.wifiLock.acquire();
 
-            @Override
-            public void onFailure(Request request, IOException e) {
-                Timber.e(e, "url : %s", url);
-                ApiError error = new ApiError(500, e);
-                error.setUrl(url);
-                apiCallback.onResponse(failureResponse(e.getMessage()), request, error);
-            }
+        final ProtobufReponseCallBack responseCallback = new ProtobufReponseCallBack(appSession.get().getUserId(), url, apiCallback, request, this, call);
+        //callBackList.add(responseCallback);
 
-            @Override
-            public void onResponse(Response response) throws IOException {
-
-                if (!response.isSuccessful()) {
-                    Timber.e("ERROR url : %s, %s", url, response);
-                    ApiError error = new ApiError(response.code(), response.message());
-                    error.setUrl(url);
-                    apiCallback.onResponse(failureResponse(response.message()), request, error);
-                } else {
-                    PAppResponse pbrsp = parseResponse(url, response);
-                    if (pbrsp.getCode() != 200) {
-                        Timber.e("Error PB Resp: %s", pbrsp);
-                        ApiError error = new ApiError(pbrsp.getCode(), pbrsp.getMsg());
-                        error.setUrl(url);
-                        apiCallback.onResponse(pbrsp, request, error);
-                    } else {
-                        Timber.d("Query Url: %s", request);
-                        apiCallback.onResponse(pbrsp, request, null);
-                    }
-                }
-
-            }
-
-        });
+        call.enqueue(responseCallback);
 
         return call;
     }
@@ -322,40 +343,13 @@ public class APIClientProvider {
 
         Call call = client.newCall(request);
 
-        call.enqueue(new Callback() {
+        this.wifiLock.acquire();
 
-            @Override
-            public void onFailure(Request request, IOException e) {
-                Timber.e(e, "url : %s", url);
-                ApiError error = new ApiError(500, e);
-                error.setUrl(url);
-                apiCallback.onResponse(failureResponse(e.getMessage()), request, error);
-            }
 
-            @Override
-            public void onResponse(Response response) throws IOException {
+        final ProtobufReponseCallBack responseCallback = new ProtobufReponseCallBack(appSession.get().getUserId(), url, apiCallback, request, this, call);
+        //callBackList.add(responseCallback);
 
-                if (!response.isSuccessful()){
-                    Timber.e("ERROR url : %s, %s", url, response);
-                    ApiError error = new ApiError(response.code(), response.message());
-                    error.setUrl(url);
-                    apiCallback.onResponse(failureResponse(response.message()), request, error);
-                }else{
-                    PAppResponse pbrsp = parseResponse(url, response);
-                    if (pbrsp.getCode() != 200){
-                        Timber.e("Error PB Resp: %s", pbrsp);
-                        ApiError error = new ApiError(pbrsp.getCode(), pbrsp.getMsg());
-                        error.setUrl(url);
-                        apiCallback.onResponse(pbrsp, request, error);
-                    }else{
-                        Timber.d("POST Url: %s", request);
-                        apiCallback.onResponse(pbrsp, request, null);
-                    }
-                }
-
-            }
-
-        });
+        call.enqueue(responseCallback);
 
         return call;
 
@@ -373,6 +367,34 @@ public class APIClientProvider {
         final Request request = buildGetRequest(url, null);
 
         Call call = client.newCall(request);
+
+//        final ProgressResponseListener progressResponseListener = new ProgressResponseListener() {
+//
+//            @Override
+//            public void onResponseProgress(long bytesRead, long contentLength, boolean done) {
+//                Timber.d("downloading... read=%s, total=%s", bytesRead, contentLength);
+//                callback.onDownloading(contentLength, bytesRead, done);
+//            }
+//        };
+//
+//        final Interceptor interceptor = new Interceptor() {
+//            @Override
+//            public Response intercept(Interceptor.Chain chain) throws IOException {
+//                //拦截
+//                Response originalResponse = chain.proceed(chain.request());
+//                //包装响应体并返回
+//                return originalResponse.newBuilder()
+//                        .body(new ProgressResponseBody(originalResponse.body(), progressResponseListener))
+//                        .build();
+//            }
+//        };
+//
+//        //克隆
+//        OkHttpClient clone = client.clone();
+//
+//        //增加拦截器
+//        clone.networkInterceptors().add(interceptor);
+
 
         call.enqueue(new Callback() {
 
@@ -463,6 +485,8 @@ public class APIClientProvider {
         List<T> list = new ArrayList<T>();
         if (response.getDataCount() > 0){
 
+            Timber.d("%s parseProtobufResponse start: %s", this, System.currentTimeMillis());
+
             Method parseFrom = null;
             try {
                 parseFrom = clazz.getMethod("parseFrom", ByteString.class);
@@ -484,6 +508,8 @@ public class APIClientProvider {
                 }
 
             }
+
+            Timber.d("%s parseProtobufResponse end: %s", this, System.currentTimeMillis());
         }
 
         return list;

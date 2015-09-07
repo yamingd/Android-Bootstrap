@@ -1,11 +1,9 @@
 package com.argo.sdk;
 
 import android.content.Context;
+import android.support.v4.util.ArrayMap;
 
-import java.util.HashMap;
 import java.util.Map;
-
-import javax.inject.Inject;
 
 /**
  *
@@ -15,10 +13,9 @@ public class FlashBucket {
 
     public static FlashBucket instance = null;
 
-    private Map<Object, Object> flash = new HashMap<Object, Object>();
+    private Map<Object, Object> flash = new ArrayMap<Object, Object>();
     private Context context;
 
-    @Inject
     public FlashBucket(Context context) {
         this.context = context;
         instance = this;

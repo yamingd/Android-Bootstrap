@@ -1,6 +1,7 @@
 package com.argo.sdk.http;
 
-import java.util.HashMap;
+import android.support.v4.util.ArrayMap;
+
 import java.util.Map;
 
 /**
@@ -8,7 +9,7 @@ import java.util.Map;
  */
 public final class PBuilder {
 
-    private Map<String, Object> values = new HashMap<String, Object>();
+    private Map<String, Object> values = new ArrayMap<String, Object>();
 
     public static PBuilder i(){
         return new PBuilder();
@@ -28,5 +29,9 @@ public final class PBuilder {
 
     public Map<String, Object> vs(){
         return values;
+    }
+
+    public boolean empty(){
+        return values.isEmpty();
     }
 }

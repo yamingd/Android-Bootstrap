@@ -3,6 +3,8 @@
 
 package com.argo.sdk.protobuf;
 
+import com.google.protobuf.AbstractMessage;
+
 /**
  * Protobuf type {@code PAppResponse}
  */
@@ -115,14 +117,14 @@ public  final class PAppResponse extends
   }
   public static final com.google.protobuf.Descriptors.Descriptor
       getDescriptor() {
-    return com.argo.sdk.protobuf.PAppResponseProto.internal_static_PAppResponse_descriptor;
+    return PAppResponseProto.internal_static_PAppResponse_descriptor;
   }
 
   protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internalGetFieldAccessorTable() {
-    return com.argo.sdk.protobuf.PAppResponseProto.internal_static_PAppResponse_fieldAccessorTable
+    return PAppResponseProto.internal_static_PAppResponse_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
-            com.argo.sdk.protobuf.PAppResponse.class, com.argo.sdk.protobuf.PAppResponse.Builder.class);
+            PAppResponse.class, PAppResponse.Builder.class);
   }
 
   public static com.google.protobuf.Parser<PAppResponse> PARSER =
@@ -460,53 +462,53 @@ public  final class PAppResponse extends
     return super.writeReplace();
   }
 
-  public static com.argo.sdk.protobuf.PAppResponse parseFrom(
+  public static PAppResponse parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static com.argo.sdk.protobuf.PAppResponse parseFrom(
+  public static PAppResponse parseFrom(
       com.google.protobuf.ByteString data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static com.argo.sdk.protobuf.PAppResponse parseFrom(byte[] data)
+  public static PAppResponse parseFrom(byte[] data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static com.argo.sdk.protobuf.PAppResponse parseFrom(
+  public static PAppResponse parseFrom(
       byte[] data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static com.argo.sdk.protobuf.PAppResponse parseFrom(java.io.InputStream input)
+  public static PAppResponse parseFrom(java.io.InputStream input)
       throws java.io.IOException {
     return PARSER.parseFrom(input);
   }
-  public static com.argo.sdk.protobuf.PAppResponse parseFrom(
+  public static PAppResponse parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
     return PARSER.parseFrom(input, extensionRegistry);
   }
-  public static com.argo.sdk.protobuf.PAppResponse parseDelimitedFrom(java.io.InputStream input)
+  public static PAppResponse parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
     return PARSER.parseDelimitedFrom(input);
   }
-  public static com.argo.sdk.protobuf.PAppResponse parseDelimitedFrom(
+  public static PAppResponse parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
     return PARSER.parseDelimitedFrom(input, extensionRegistry);
   }
-  public static com.argo.sdk.protobuf.PAppResponse parseFrom(
+  public static PAppResponse parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
     return PARSER.parseFrom(input);
   }
-  public static com.argo.sdk.protobuf.PAppResponse parseFrom(
+  public static PAppResponse parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
@@ -515,7 +517,7 @@ public  final class PAppResponse extends
 
   public static Builder newBuilder() { return Builder.create(); }
   public Builder newBuilderForType() { return newBuilder(); }
-  public static Builder newBuilder(com.argo.sdk.protobuf.PAppResponse prototype) {
+  public static Builder newBuilder(PAppResponse prototype) {
     return newBuilder().mergeFrom(prototype);
   }
   public Builder toBuilder() { return newBuilder(this); }
@@ -531,20 +533,20 @@ public  final class PAppResponse extends
    */
   public static final class Builder extends
       com.google.protobuf.GeneratedMessage.Builder<Builder>
-     implements com.argo.sdk.protobuf.PAppResponseOrBuilder {
+     implements PAppResponseOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return com.argo.sdk.protobuf.PAppResponseProto.internal_static_PAppResponse_descriptor;
+      return PAppResponseProto.internal_static_PAppResponse_descriptor;
     }
 
     protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return com.argo.sdk.protobuf.PAppResponseProto.internal_static_PAppResponse_fieldAccessorTable
+      return PAppResponseProto.internal_static_PAppResponse_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              com.argo.sdk.protobuf.PAppResponse.class, com.argo.sdk.protobuf.PAppResponse.Builder.class);
+              PAppResponse.class, PAppResponse.Builder.class);
     }
 
-    // Construct using com.inno.sdk.protobuf.PAppResponse.newBuilder()
+    // Construct using PAppResponse.newBuilder()
     private Builder() {
       maybeForceBuilderInitialization();
     }
@@ -587,23 +589,23 @@ public  final class PAppResponse extends
 
     public com.google.protobuf.Descriptors.Descriptor
         getDescriptorForType() {
-      return com.argo.sdk.protobuf.PAppResponseProto.internal_static_PAppResponse_descriptor;
+      return PAppResponseProto.internal_static_PAppResponse_descriptor;
     }
 
-    public com.argo.sdk.protobuf.PAppResponse getDefaultInstanceForType() {
-      return com.argo.sdk.protobuf.PAppResponse.getDefaultInstance();
+    public PAppResponse getDefaultInstanceForType() {
+      return PAppResponse.getDefaultInstance();
     }
 
-    public com.argo.sdk.protobuf.PAppResponse build() {
-      com.argo.sdk.protobuf.PAppResponse result = buildPartial();
+    public PAppResponse build() {
+      PAppResponse result = buildPartial();
       if (!result.isInitialized()) {
-        throw newUninitializedMessageException(result);
+        throw AbstractMessage.Builder.newUninitializedMessageException(result);
       }
       return result;
     }
 
-    public com.argo.sdk.protobuf.PAppResponse buildPartial() {
-      com.argo.sdk.protobuf.PAppResponse result = new com.argo.sdk.protobuf.PAppResponse(this);
+    public PAppResponse buildPartial() {
+      PAppResponse result = new PAppResponse(this);
       int from_bitField0_ = bitField0_;
       int to_bitField0_ = 0;
       if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
@@ -643,16 +645,16 @@ public  final class PAppResponse extends
     }
 
     public Builder mergeFrom(com.google.protobuf.Message other) {
-      if (other instanceof com.argo.sdk.protobuf.PAppResponse) {
-        return mergeFrom((com.argo.sdk.protobuf.PAppResponse)other);
+      if (other instanceof PAppResponse) {
+        return mergeFrom((PAppResponse)other);
       } else {
         super.mergeFrom(other);
         return this;
       }
     }
 
-    public Builder mergeFrom(com.argo.sdk.protobuf.PAppResponse other) {
-      if (other == com.argo.sdk.protobuf.PAppResponse.getDefaultInstance()) return this;
+    public Builder mergeFrom(PAppResponse other) {
+      if (other == PAppResponse.getDefaultInstance()) return this;
       if (other.hasMsg()) {
         bitField0_ |= 0x00000001;
         msg_ = other.msg_;
@@ -710,11 +712,11 @@ public  final class PAppResponse extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      com.argo.sdk.protobuf.PAppResponse parsedMessage = null;
+      PAppResponse parsedMessage = null;
       try {
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        parsedMessage = (com.argo.sdk.protobuf.PAppResponse) e.getUnfinishedMessage();
+        parsedMessage = (PAppResponse) e.getUnfinishedMessage();
         throw e;
       } finally {
         if (parsedMessage != null) {

@@ -10,6 +10,8 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
+import android.net.wifi.WifiManager;
+import android.os.PowerManager;
 import android.preference.PreferenceManager;
 import android.telephony.TelephonyManager;
 import android.view.inputmethod.InputMethodManager;
@@ -105,5 +107,17 @@ public class AndroidModule {
     @Singleton
     ActivityManager provideActivityManager(final Context context) {
         return (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+    }
+
+    @Provides
+    @Singleton
+    WifiManager provideWifiManager(final Context context) {
+        return (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+    }
+
+    @Provides
+    @Singleton
+    PowerManager providePowerManager(final Context context) {
+        return (PowerManager) context.getSystemService(Context.POWER_SERVICE);
     }
 }

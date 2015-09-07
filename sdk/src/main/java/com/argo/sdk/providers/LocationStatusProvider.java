@@ -23,6 +23,7 @@ import timber.log.Timber;
 public class LocationStatusProvider implements AMapLocationListener, Closeable {
 
     public static final int DEFAULT_TRY_MAX = 10;
+    public static LocationStatusProvider instance = null;
 
     private Context context;
     public LocationManagerProxy mLocationManagerProxy;
@@ -31,6 +32,8 @@ public class LocationStatusProvider implements AMapLocationListener, Closeable {
     private Bus bus;
 
     private int tryMax = DEFAULT_TRY_MAX;
+    private int stage = -1;
+    private long failureAt = 0;
 
     public LocationStatusProvider(Context context, Bus bus) {
         this.context = context;
@@ -38,21 +41,41 @@ public class LocationStatusProvider implements AMapLocationListener, Closeable {
 
         mLocationManagerProxy = LocationManagerProxy.getInstance(this.context);
         mLocationManagerProxy.setGpsEnable(false);
+
+        instance = this;
     }
 
-    public void start(){
+    public synchronized void start(){
+        Timber.d("%s, start locating...", this);
+        if (stage == 0){
+            return;
+        }
+
+        stage = 0; // 定位中
         //此方法为每隔固定时间会发起一次定位请求，为了减少电量消耗或网络流量消耗，
         //注意设置合适的定位时间的间隔，并且在合适时间调用removeUpdates()方法来取消定位请求
         //在定位结束后，在合适的生命周期调用destroy()方法
         //其中如果间隔时间为-1，则定位只定一次
         mLocationManagerProxy.requestLocationData(
                 LocationProviderProxy.AMapNetwork, 60 * 1000, 15, this);
-        Timber.d("Location Client Start.");
+        Timber.d("%s, Location Client Start.", this);
     }
 
-    public void stop(){
+    public synchronized void stop(){
         mLocationManagerProxy.removeUpdates(this);
-        Timber.d("Location Client Stop.");
+        Timber.d("%s, Location Client Stop.", this);
+    }
+
+    public void restart(){
+        long ts = System.currentTimeMillis() - failureAt;
+        ts = ts / 1000 / 60;
+        if (ts >= 1){
+            start();
+        }
+    }
+
+    public boolean isFailure(){
+        return stage == 2;
     }
 
     public Location getLastLocation(){
@@ -83,14 +106,21 @@ public class LocationStatusProvider implements AMapLocationListener, Closeable {
     public void onLocationChanged(AMapLocation aMapLocation) {
 
         if(aMapLocation != null && aMapLocation.getAMapException().getErrorCode() == 0){
+            tryMax = DEFAULT_TRY_MAX;
+            stage = 1;
             //获取位置信息
             this.lastLocation = aMapLocation;
-            //Timber.d("location found: %s", aMapLocation);
+            Timber.d("%s, location found: %s", this, aMapLocation);
             this.bus.post(new LocationAvailableEvent(aMapLocation));
 
         }else{
-
-            Timber.e("Location Error. code=%s, msg=%s",
+            tryMax -- ;
+            if (tryMax == 0){
+                stage = 2;
+                failureAt = System.currentTimeMillis();
+                stop();
+            }
+            Timber.e("%s, Location Error. code=%s, msg=%s",this,
                     aMapLocation.getAMapException().getErrorCode(),
                     aMapLocation.getAMapException().getErrorMessage());
 
@@ -105,16 +135,16 @@ public class LocationStatusProvider implements AMapLocationListener, Closeable {
 
     @Override
     public void onStatusChanged(String provider, int status, Bundle extras) {
-        Timber.d("onStatusChanged, provider=%s, status=%s, extras=%s", provider, status, extras);
+        Timber.d("%s, onStatusChanged, provider=%s, status=%s, extras=%s", this, provider, status, extras);
     }
 
     @Override
     public void onProviderEnabled(String provider) {
-        Timber.d("onProviderEnabled, provider=%s", provider);
+        Timber.d("%s, onProviderEnabled, provider=%s", this, provider);
     }
 
     @Override
     public void onProviderDisabled(String provider) {
-        Timber.d("onProviderDisabled, provider=%s", provider);
+        Timber.d("%s, onProviderDisabled, provider=%s",this, provider);
     }
 }

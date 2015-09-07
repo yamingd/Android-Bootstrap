@@ -66,7 +66,6 @@ public final class AssetsUtil {
             int len;
 
             try {
-
                 while ((len = in.read(buf)) > 0){
                     sink.write(buf, 0, len);
                 }

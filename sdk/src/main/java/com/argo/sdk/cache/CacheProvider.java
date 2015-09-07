@@ -3,15 +3,19 @@ package com.argo.sdk.cache;
 import android.content.Context;
 import android.os.Environment;
 
+import com.argo.sdk.util.Strings;
 import com.jakewharton.disklrucache.DiskLruCache;
 
 import java.io.Closeable;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import okio.BufferedSink;
+import okio.Okio;
 import timber.log.Timber;
 
 /**
@@ -47,7 +51,7 @@ public class CacheProvider implements Closeable {
     private File getDiskCacheDir(Context context, String uniqueName) {
         String cachePath;
         if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())
-                && !Environment.isExternalStorageRemovable()) {
+                && !Environment.isExternalStorageRemovable()&&context.getExternalCacheDir()!=null) {
             cachePath = context.getExternalCacheDir().getPath();
         } else {
             cachePath = context.getCacheDir().getPath();
@@ -147,6 +151,49 @@ public class CacheProvider implements Closeable {
 
         return null;
 
+    }
+
+    /**
+     *
+     * @param url
+     * @return
+     */
+    public File getFile(String url){
+        InputStream inputStream = get(url);
+        if (inputStream == null){
+            return null;
+        }
+        File destFile = new File(context.getCacheDir(), Strings.md5(url));
+        if(destFile.exists()){
+            return  destFile;
+        }
+//        destFile.deleteOnExit();
+        BufferedSink sink = null;
+        try {
+            sink = Okio.buffer(Okio.sink(destFile));
+        } catch (FileNotFoundException e) {
+
+        }
+        byte[] buf = new byte[1024];
+        int len;
+
+        try {
+            while ((len = inputStream.read(buf)) > 0){
+                sink.write(buf, 0, len);
+            }
+            remove(url);
+            return destFile;
+        } catch (IOException e) {
+            Timber.e(e, e.getMessage());
+            return null;
+        }finally {
+            try {
+                sink.close();
+                inputStream.close();
+            } catch (IOException e) {
+                Timber.e(e, e.getMessage());
+            }
+        }
     }
 
     /**

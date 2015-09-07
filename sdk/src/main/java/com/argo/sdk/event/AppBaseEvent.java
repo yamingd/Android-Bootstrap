@@ -3,6 +3,7 @@ package com.argo.sdk.event;
 import com.argo.sdk.ApiError;
 
 import java.io.Serializable;
+import java.net.SocketTimeoutException;
 
 /**
  * Created by user on 6/18/15.
@@ -35,6 +36,20 @@ public abstract class AppBaseEvent implements Serializable {
 
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    public boolean hasError(){
+        return exception != null || errorCode > 0;
+    }
+
+    public boolean isNetworkLost(){
+        if (exception != null){
+            if (exception instanceof SocketTimeoutException){
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

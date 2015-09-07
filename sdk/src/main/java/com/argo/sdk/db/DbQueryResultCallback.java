@@ -1,11 +1,11 @@
-package com.argo.sdk.realm;
+package com.argo.sdk.db;
 
 import java.util.List;
 
 /**
  * Created by user on 7/2/15.
  */
-public interface RealmQueryResultCallback<T> {
+public interface DbQueryResultCallback<T> {
 
     /**
      *

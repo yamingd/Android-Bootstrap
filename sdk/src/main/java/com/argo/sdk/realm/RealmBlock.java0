@@ -1,0 +1,12 @@
+//package com.inno.sdk.realm;
+//
+//import com.inno.sdk.db.DbExecuteBlock;
+//
+//import io.realm.Realm;
+//
+///**
+// * Created by user on 6/15/15.
+// */
+//public interface RealmBlock extends DbExecuteBlock<Realm> {
+//
+//}

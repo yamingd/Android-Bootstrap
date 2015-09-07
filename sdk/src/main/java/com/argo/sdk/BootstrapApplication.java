@@ -9,6 +9,7 @@ import android.content.Context;
 import com.argo.sdk.event.ApplicationTerminateEvent;
 import com.argo.sdk.providers.DeadEventTracker;
 import com.argo.sdk.providers.NetworkStatusProvider;
+import com.argo.sdk.providers.RunningStatProvider;
 import com.squareup.otto.Bus;
 
 import java.io.IOException;
@@ -47,9 +48,13 @@ public abstract class BootstrapApplication extends Application {
 
         instance = this;
 
+        //refWatcher = com.squareup.leakcanary.LeakCanary.install(this);
+
         Timber.i("Thread: %s, Locale: %s", Thread.currentThread(), Locale.getDefault());
 
         initBeforeInject();
+
+        new RunningStatProvider(this);
 
         //Injector.init(this.getComponentClass(), this);
 

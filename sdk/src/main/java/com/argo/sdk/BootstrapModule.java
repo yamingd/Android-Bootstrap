@@ -3,11 +3,11 @@ package com.argo.sdk;
 import android.content.Context;
 import android.net.ConnectivityManager;
 
-import com.argo.sdk.cache.CacheProvider;
 import com.argo.sdk.event.EventBus;
 import com.argo.sdk.providers.DeadEventTracker;
-import com.argo.sdk.providers.LocationStatusProvider;
 import com.argo.sdk.providers.NetworkStatusProvider;
+import com.argo.sdk.cache.CacheProvider;
+import com.argo.sdk.providers.LocationStatusProvider;
 import com.squareup.otto.Bus;
 import com.squareup.picasso.Picasso;
 
@@ -61,5 +61,11 @@ public class BootstrapModule {
         Picasso picasso =  builder.build();
         Picasso.setSingletonInstance(picasso);
         return picasso;
+    }
+
+    @Singleton
+    @Provides
+    FlashBucket provideFlashBucket(final Context context){
+        return new FlashBucket(context);
     }
 }

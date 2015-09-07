@@ -20,6 +20,6 @@ public class DeadEventTracker {
 
     @Subscribe
     public void onDeadEvent(DeadEvent deadEvent){
-        Timber.e("DeadEvent: %s, source: %s", deadEvent.event, deadEvent.source);
+        Timber.d("DeadEvent: %s, source: %s", deadEvent.event, deadEvent.source);
     }
 }

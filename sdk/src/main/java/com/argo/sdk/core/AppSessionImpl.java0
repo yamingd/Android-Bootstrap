@@ -1,0 +1,105 @@
+//package com.inno.sdk.core;
+//
+//import android.content.Context;
+//import android.content.pm.ApplicationInfo;
+//import android.content.pm.PackageInfo;
+//import android.telephony.TelephonyManager;
+//
+//import com.inno.sdk.realm.RealmBlock;
+//import com.inno.sdk.realm.RealmContext;
+//import com.inno.sdk.util.AssetsUtil;
+//
+//import java.io.File;
+//import java.io.IOException;
+//
+//import javax.inject.Inject;
+//
+//import io.realm.Realm;
+//import io.realm.RealmResults;
+//import timber.log.Timber;
+//
+//
+///**
+// * Created by user on 11/6/14.
+// */
+//public class AppSessionImpl extends AppSessionAbstractImpl {
+//
+//    private RealmContext sessionDb = null;
+//
+//    /**
+//     * 构造函数
+//     * @param context
+//     * @param appInfo
+//     * @param packageInfo
+//     * @param telephonyManager
+//     */
+//    @Inject
+//    public AppSessionImpl(Context context, ApplicationInfo appInfo, PackageInfo packageInfo, TelephonyManager telephonyManager, AppSecurity appSecurity){
+//        super(context, appInfo, packageInfo, telephonyManager, appSecurity);
+//    }
+//
+//    @Override
+//    protected void initAppSessionDb() {
+//
+//        loadDbTemplate();
+//
+//        sessionDb = new RealmContext(context, this, DB_BASE, appSecurity.getSalt(), 0, new AppSessionModule(), null);
+//
+//        sessionDb.queryAndClose(new RealmBlock() {
+//            @Override
+//            public void execute(Realm realm) {
+//
+//                RealmResults<AppSessionData> rs = realm.allObjects(AppSessionData.class);
+//
+//                for (int i=0; i<rs.size(); i++){
+//                    AppSessionData item = rs.get(i);
+//                    if (item.getKey().equalsIgnoreCase(KEY_SESSION)){
+//                        initSession(item);
+//                    }else{
+//                        initConfig(item);
+//                    }
+//                }
+//            }
+//        });
+//
+//    }
+//
+//    private void loadDbTemplate(){
+//
+//        File file = RealmContext.getDbFolder(context, DB_BASE);
+//        if (file.exists()) {
+//            Timber.i("Realm file exists: %s", file);
+//            return;
+//        }
+//        boolean ok = AssetsUtil.copyFromAssets(context, file, DB_BASE);
+//        Timber.i("Copy Done: %s, %s", ok, file);
+//
+//    }
+//
+//    /**
+//     *
+//     * Save Session to disk
+//     */
+//    @Override
+//    protected void save(){
+//
+//        sessionDb.update(new RealmBlock() {
+//            @Override
+//            public void execute(Realm realm) {
+//
+//                AppSessionData session = new AppSessionData();
+//                session.setData(current.toByteArray());
+//                session.setKey(KEY_SESSION);
+//                realm.copyToRealmOrUpdate(session);
+//
+//            }
+//        });
+//
+//        sessionDb.close();
+//    }
+//
+//    @Override
+//    public void close() throws IOException {
+//        this.sessionDb.close();
+//    }
+//}

@@ -1,5 +1,6 @@
 package com.argo.sdk.http;
 
+import com.argo.sdk.BootConstants;
 import com.squareup.okhttp.Interceptor;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
@@ -22,7 +23,9 @@ class LoggingInterceptor implements Interceptor {
         Response response = chain.proceed(request);
 
         long t2 = System.nanoTime();
-        Timber.d("Received response for %s in %.1fms%n", response.request().url(), (t2 - t1) / 1e6d);
+        if (BootConstants.pringHttpTS) {
+            Timber.i("Received response for %s in %.1fms%n", response.request().url(), (t2 - t1) / 1e6d);
+        }
 
         return response;
     }

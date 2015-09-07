@@ -1,7 +1,5 @@
 package com.argo.sdk;
 
-import android.location.Location;
-
 import com.argo.sdk.protobuf.PAppSession;
 
 import java.io.Closeable;
@@ -14,7 +12,6 @@ import javax.inject.Provider;
  */
 public interface AppSession extends Closeable, Provider<PAppSession> {
 
-    boolean isDebug();
     /**
      *
      * @return
@@ -38,14 +35,13 @@ public interface AppSession extends Closeable, Provider<PAppSession> {
 
     /**
      *
-     * @param location
      */
-    void rememberLocation(Location location);
+    void clear();
 
     /**
      *
      */
-    void clear();
+    void save();
 
     /**
      *
@@ -60,6 +56,13 @@ public interface AppSession extends Closeable, Provider<PAppSession> {
     boolean isAnonymous();
 
     /**
+     * 加密请求
+     * @param url
+     * @return
+     */
+    String signRequest(String url);
+
+    /**
      *
      * @param key
      * @param defaultValue
@@ -67,4 +70,6 @@ public interface AppSession extends Closeable, Provider<PAppSession> {
      * @return
      */
     <T> T getConfigValue(String key, T defaultValue);
+
+    String dump();
 }

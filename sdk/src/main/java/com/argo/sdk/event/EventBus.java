@@ -6,8 +6,6 @@ import android.os.Looper;
 import com.squareup.otto.Bus;
 import com.squareup.otto.ThreadEnforcer;
 
-import timber.log.Timber;
-
 /**
  * This message bus allows you to post a message from any thread and it will get handled and then
  * posted to the main thread for you.
@@ -25,7 +23,7 @@ public class EventBus extends Bus
     @Override
     public void post(final Object event)
     {
-        Timber.d("Bus post event 0: %s", event);
+        //Timber.d("Bus post event 0: %s", event);
 
         if (Looper.myLooper() != Looper.getMainLooper())
         {
@@ -36,7 +34,7 @@ public class EventBus extends Bus
                 public void run()
                 {
                     // We're now in the main loop, we can post now
-                    Timber.d("Bus post event 2: %s", event);
+                    //Timber.d("Bus post event 2: %s", event);
 
                     EventBus.super.post(event);
                 }
@@ -44,7 +42,7 @@ public class EventBus extends Bus
         }
         else
         {
-            Timber.d("Bus post event 1: %s", event);
+            //Timber.d("Bus post event 1: %s", event);
 
             super.post(event);
         }
@@ -61,7 +59,7 @@ public class EventBus extends Bus
         catch (IllegalArgumentException e)
         {
             // TODO: use Crashlytics unhandled exception logging
-            Timber.e(e, e.getMessage());
+            //Timber.e(e, e.getMessage());
         }
     }
 

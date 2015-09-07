@@ -1,6 +1,8 @@
 package com.argo.sdk.util;
 
 
+import android.support.v4.util.ArrayMap;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -11,7 +13,6 @@ import java.security.InvalidParameterException;
 import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -190,7 +191,7 @@ public class Strings {
         if (nameValuePairs.length % 2 != 0)
             throw new InvalidParameterException("You must include one value for each parameter");
 
-        final HashMap<String, String> map = new HashMap<String, String>(nameValuePairs.length / 2);
+        final Map<String, String> map = new ArrayMap<String, String>(nameValuePairs.length / 2);
         for (int i = 0; i < nameValuePairs.length; i += 2)
             map.put(Strings.toString(nameValuePairs[i]), Strings.toString(nameValuePairs[i + 1]));
 

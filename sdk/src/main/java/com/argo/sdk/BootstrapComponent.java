@@ -8,13 +8,14 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
+import android.net.wifi.WifiManager;
 import android.telephony.TelephonyManager;
 import android.view.inputmethod.InputMethodManager;
 
-import com.argo.sdk.cache.CacheProvider;
 import com.argo.sdk.providers.DeadEventTracker;
-import com.argo.sdk.providers.LocationStatusProvider;
 import com.argo.sdk.providers.NetworkStatusProvider;
+import com.argo.sdk.cache.CacheProvider;
+import com.argo.sdk.providers.LocationStatusProvider;
 import com.squareup.otto.Bus;
 import com.squareup.picasso.Picasso;
 
@@ -48,6 +49,7 @@ public interface BootstrapComponent {
     ConnectivityManager connectivityManager();
     LocationManager locationManager();
     ActivityManager activityManager();
+    WifiManager wifiManager();
 
     DeadEventTracker deadEventTracker();
     CacheProvider cacheProvider();
