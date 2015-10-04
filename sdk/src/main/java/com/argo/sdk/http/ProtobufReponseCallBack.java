@@ -1,9 +1,11 @@
 package com.argo.sdk.http;
 
+import com.argo.sdk.ApiError;
 import com.argo.sdk.AppSession;
 import com.argo.sdk.BootConstants;
+import com.argo.sdk.event.AccountKickOffEvent;
+import com.argo.sdk.event.EventBus;
 import com.argo.sdk.protobuf.PAppResponse;
-import com.argo.sdk.ApiError;
 import com.squareup.okhttp.Call;
 import com.squareup.okhttp.Callback;
 import com.squareup.okhttp.Request;
@@ -78,7 +80,7 @@ public class ProtobufReponseCallBack implements Callback {
             return;
         }
 
-        ApiError error = new ApiError(500, e);
+        ApiError error = new ApiError(408, e);
         error.setUrl(url);
         String msg = e.getMessage();
         if (e instanceof SocketTimeoutException){
@@ -86,10 +88,15 @@ public class ProtobufReponseCallBack implements Callback {
         }else if(e instanceof ConnectException){
             msg = "网络连接有错误, 请检查";
         }
+
         try {
-            apiCallback.onResponse(failureResponse(msg), request, error);
+            apiCallback.onResponse(failureResponse(408, msg), request, error);
         } catch (Exception e1) {
             Timber.e(e, "apiCallback.onResponse");
+        }
+
+        if (error.getCode() == 408){
+            this.apiClientProvider.postNetworkStatusEvent(false);
         }
 
         this.onDone();
@@ -109,14 +116,18 @@ public class ProtobufReponseCallBack implements Callback {
             ApiError error = new ApiError(response.code(), response.message());
             error.setUrl(url);
             try {
-                apiCallback.onResponse(failureResponse(response.message()), request, error);
+                apiCallback.onResponse(failureResponse(408, response.message()), request, error);
             } catch (Exception e) {
                 Timber.e(e, "apiCallback.onResponse");
             }
         } else {
             PAppResponse pbrsp = parseResponse(url, response);
             if (pbrsp.getCode() != 200) {
-                Timber.e("Error PB Resp: %s", url);
+                Timber.e("Error PB Resp: %s %s \n %s", url, pbrsp.getMsg(), pbrsp.getErrorsList());
+                if (pbrsp.getCode() == 60900){
+                    EventBus.instance.post(new AccountKickOffEvent());
+                    return;
+                }
                 ApiError error = new ApiError(pbrsp.getCode(), pbrsp.getMsg());
                 error.setUrl(url);
                 try {
@@ -139,6 +150,8 @@ public class ProtobufReponseCallBack implements Callback {
             Timber.i("HandleResponse for %s in %.1fms%n", response.request().url(), (t2 - t1) / 1e6d);
         }
 
+        this.apiClientProvider.postNetworkStatusEvent(true);
+
         this.onDone();
     }
 
@@ -147,9 +160,9 @@ public class ProtobufReponseCallBack implements Callback {
      * @param msg
      * @return
      */
-    private PAppResponse failureResponse(String msg){
+    private PAppResponse failureResponse(int code, String msg){
         PAppResponse.Builder builder = PAppResponse.newBuilder();
-        builder.setCode(500);
+        builder.setCode(code);
         builder.setMsg(msg);
         return builder.build();
     }

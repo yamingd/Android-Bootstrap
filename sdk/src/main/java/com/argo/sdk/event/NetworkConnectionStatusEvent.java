@@ -14,4 +14,12 @@ public class NetworkConnectionStatusEvent extends AppBaseEvent {
     public boolean isAvailable() {
         return available;
     }
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("NetworkConnectionStatusEvent{");
+        sb.append("available=").append(available);
+        sb.append('}');
+        return sb.toString();
+    }
 }

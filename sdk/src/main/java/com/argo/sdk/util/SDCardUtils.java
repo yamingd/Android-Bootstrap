@@ -40,7 +40,9 @@ public class SDCardUtils {
      */
     public static String getDiskCacheDir(Context context) {
         String cachePath = null;
-        if (isSDCardAvailable() || !Environment.isExternalStorageRemovable()) {
+        if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())
+                && !Environment.isExternalStorageRemovable()
+                && context.getExternalCacheDir()!=null) {
             cachePath = context.getExternalCacheDir().getPath();
         } else {
             cachePath = context.getCacheDir().getPath();

@@ -27,6 +27,9 @@ repositories {
 
 allprojects {
     repositories {
+        maven { url 'http://maven.oschina.net/content/groups/public/' }
+        mavenLocal()
+        mavenCentral()
         jcenter()
     }
 }

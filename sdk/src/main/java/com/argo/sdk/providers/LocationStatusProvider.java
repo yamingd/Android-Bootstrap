@@ -111,6 +111,8 @@ public class LocationStatusProvider implements AMapLocationListener, Closeable {
             //获取位置信息
             this.lastLocation = aMapLocation;
             Timber.d("%s, location found: %s", this, aMapLocation);
+            stop();
+
             this.bus.post(new LocationAvailableEvent(aMapLocation));
 
         }else{

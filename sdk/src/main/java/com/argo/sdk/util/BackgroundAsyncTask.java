@@ -28,9 +28,11 @@ import timber.log.Timber;
  * @param <ResultT>
  */
 public abstract class BackgroundAsyncTask<ResultT> implements Callable<ResultT> {
-    public static final int DEFAULT_POOL_SIZE = 25;
+    public static final int DEFAULT_POOL_SIZE = 5;
     protected static final Executor DEFAULT_EXECUTOR = Executors.newFixedThreadPool(DEFAULT_POOL_SIZE);
+    static {
 
+    }
     protected Executor executor;
     protected StackTraceElement[] launchLocation;
     protected FutureTask<Void> future;

@@ -15,7 +15,7 @@ public class AppSecurity {
     static {
         System.loadLibrary("c++_shared");
         System.loadLibrary("kcrypto");
-        System.loadLibrary("k12core");
+        System.loadLibrary("argoboot");
     }
 
     private Context context;

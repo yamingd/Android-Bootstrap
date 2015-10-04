@@ -90,6 +90,8 @@
 -keep class butterknife.** { *; }
 -dontwarn butterknife.internal.**
 -keep class **$$ViewBinder { *; }
+-keep class **$$ModuleAdapter { *; }
+-keep class **$$ViewInjector { *; }
 
 -keepclasseswithmembernames class * {
     @butterknife.* <fields>;
@@ -98,6 +100,7 @@
 -keepclasseswithmembernames class * {
     @butterknife.* <methods>;
 }
+
 
 ## realm.io
 -keep @io.realm.annotations.RealmModule class *
@@ -110,3 +113,30 @@
     @com.squareup.otto.Subscribe public *;
     @com.squareup.otto.Produce public *;
 }
+
+## umeng
+-dontwarn com.umeng.**
+-dontwarn com.tencent.weibo.sdk.**
+-dontwarn com.facebook.**
+
+-keep public interface com.tencent.**
+-keep public interface com.umeng.socialize.**
+-keep public interface com.umeng.socialize.sensor.**
+-keep public interface com.umeng.scrshot.**
+-keep public class com.umeng.socialize.* {*;}
+-keep class com.umeng.scrshot.**
+-keep public class com.tencent.** {*;}
+-keep class com.umeng.socialize.sensor.**
+
+-keep class com.tencent.mm.sdk.modelmsg.WXMediaMessage {*;}
+
+-keep class com.tencent.mm.sdk.modelmsg.** implements com.tencent.mm.sdk.modelmsg.WXMediaMessage$IMediaObject {*;}
+
+-dontwarn java.nio.**
+-dontwarn java.awt.**
+-dontwarn javax.**
+
+-keep class net.sqlcipher.** { *; }
+-keep class net.sqlcipher.database.** { *; }
+
+-keepclassmembers class com.inno.k12.ui.UIActivityComponent** { *; }

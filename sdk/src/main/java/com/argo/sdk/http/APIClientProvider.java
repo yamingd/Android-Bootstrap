@@ -5,12 +5,14 @@ import android.net.wifi.WifiManager;
 import android.support.v4.util.ArrayMap;
 import android.webkit.MimeTypeMap;
 
-import com.argo.sdk.providers.UserAgentProvider;
-import com.google.protobuf.ByteString;
 import com.argo.sdk.AppSession;
 import com.argo.sdk.cache.CacheProvider;
 import com.argo.sdk.cache.CacheWriter;
+import com.argo.sdk.event.EventBus;
+import com.argo.sdk.event.NetworkConnectionStatusEvent;
 import com.argo.sdk.protobuf.PAppResponse;
+import com.argo.sdk.providers.UserAgentProvider;
+import com.google.protobuf.ByteString;
 import com.jakewharton.disklrucache.DiskLruCache;
 import com.squareup.okhttp.Call;
 import com.squareup.okhttp.Callback;
@@ -30,7 +32,6 @@ import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -100,7 +101,8 @@ public class APIClientProvider {
         this.client.setReadTimeout(30, TimeUnit.SECONDS);
         this.client.setWriteTimeout(30, TimeUnit.SECONDS);
         this.client.setConnectionPool(ConnectionPool.getDefault());
-
+        this.client.getDispatcher().setMaxRequestsPerHost(3);
+        this.client.getDispatcher().setMaxRequests(3);
         //拦截器
         this.client.interceptors().add(new LoggingInterceptor());
     }
@@ -144,7 +146,9 @@ public class APIClientProvider {
                 hb.addQueryParameter(key, params.get(key) + "");
             }
         }
-        return hb.build();
+        HttpUrl httpUrl = hb.build();
+        //Timber.i("fullUrl:%s host:%s, port:%s", fullUrl, httpUrl.host(), httpUrl.port());
+        return httpUrl;
     }
 
     /**
@@ -180,7 +184,7 @@ public class APIClientProvider {
         }else if (o instanceof  byte[]){
             byte[] tmp = (byte[])o;
             RequestBody file = RequestBody.create(MEDIA_TYPE_DEFAULT, tmp);
-            multipartBuilder.addFormDataPart(key, new Date().getTime() / 1000 + "", file);
+            multipartBuilder.addFormDataPart(key, System.currentTimeMillis() / 1000 + "", file);
         }
         else{
             multipartBuilder.addFormDataPart(key, o.toString());
@@ -303,6 +307,11 @@ public class APIClientProvider {
 
     public void onResponseCallbackDone(ProtobufReponseCallBack callBack){
         callBackList.remove(callBack);
+    }
+
+    private int trackNetworkStatus = 0;
+    public void postNetworkStatusEvent(boolean ok){
+        EventBus.instance.post(new NetworkConnectionStatusEvent(ok));
     }
 
     /**

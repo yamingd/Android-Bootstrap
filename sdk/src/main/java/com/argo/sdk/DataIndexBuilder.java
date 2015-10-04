@@ -267,6 +267,23 @@ public class DataIndexBuilder<T extends DataIndexBuilder.DataIndex> {
     }
 
     /**
+     * 删除数据记录
+     * @param position
+     * @return
+     */
+    public T remove(int position){
+        if(position<0){
+            return null;
+        }
+        int index = indexMark.get(position).getValue();
+        if (index == -1){
+            return null;
+        }
+        T value = dataList.remove(index);
+        return value;
+    }
+
+    /**
      * 重置数据
      * @param list
      */

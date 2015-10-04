@@ -1,0 +1,81 @@
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion 21
+    buildToolsVersion "21.1.0"
+
+    defaultConfig {
+        minSdkVersion 15
+        targetSdkVersion 21
+        versionCode 1
+        versionName "1.0.0"
+
+        ndk {
+            moduleName "argoboot"
+            stl "c++_shared"
+            cFlags "-std=c++11"
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    productFlavors {
+        armeabi{
+            ndk {
+                ldLibs "log", "m", "jnigraphics", file('src/main/jniLibs/armeabi').absolutePath + "/libkcrypto.so"
+                abiFilters "armeabi"
+            }
+        }
+
+        armeabiv7a{
+            ndk {
+                ldLibs "log", "m", "jnigraphics", file('src/main/jniLibs/armeabi-v7a').absolutePath + "/libkcrypto.so"
+                abiFilters "armeabi-v7a"
+            }
+        }
+
+        x86{
+            ndk {
+                ldLibs "log", "m", "jnigraphics", file('src/main/jniLibs/x86').absolutePath + "/libkcrypto.so"
+                abiFilters "x86"
+            }
+        }
+    }
+
+}
+
+tasks.create("releaseJNI") << {
+    File toFolder = file('../sdk/src/main/jniLibs')
+    //println to
+    FileTree tree = fileTree(dir: 'build/intermediates/ndk/')
+    tree.include '**/*.so'
+    tree.each {File item ->
+        String path = item.absolutePath
+        //println path
+        if (path.contains("/release/lib/")){
+            String[] tmp = path.split('/')
+            String mergeto = 'src/main/jniLibs/' + tmp[-2]
+            mergeto = file(mergeto).absolutePath
+            //println mergeto
+            copy{
+                from path
+                into mergeto
+            }
+        }
+    }
+    File sourceFolder = file('src/main/jniLibs')
+    copy {
+        from sourceFolder
+        into toFolder
+    }
+}
+tasks['releaseJNI'].dependsOn tasks['build'] //only run after build (doesn't work, runs immediately at configuration time)
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+}

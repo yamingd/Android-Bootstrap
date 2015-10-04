@@ -3,7 +3,6 @@ package com.argo.sdk.providers;
 import android.content.Context;
 
 import com.argo.sdk.AppSession;
-import com.argo.sdk.BootConstants;
 import com.umeng.analytics.AnalyticsConfig;
 import com.umeng.analytics.MobclickAgent;
 import com.umeng.update.UmengUpdateAgent;
@@ -33,29 +32,47 @@ public class UmengTrackProvider {
         instance = this;
     }
 
-    private void init(){
+    private void init() {
 //        enabled = appSession.getConfigValue("AppUMengEnable", false);
         enabled = true;
-        if (enabled){
+        if (enabled) {
             appId = appSession.getConfigValue("AppUMengId", "");
             channel = appSession.getConfigValue("Channel", "");
 
-            AnalyticsConfig.setAppkey(appId);
+            AnalyticsConfig.setAppkey(context,appId);
             AnalyticsConfig.setChannel(channel);
 
             MobclickAgent.setCatchUncaughtExceptions(true);
-            MobclickAgent.setDebugMode(BootConstants.DEBUG);
+            MobclickAgent.setDebugMode(false);
             MobclickAgent.updateOnlineConfig(this.context);
         }
 
         Timber.i("Umeng init. enabled=%s, channel=%s", enabled, channel);
     }
 
-    public void startAutoUpdate(Context view){
+    public void startAutoUpdate(Context view) {
         UmengUpdateAgent.setUpdateAutoPopup(true);
         UmengUpdateAgent.setAppkey(appId);
         UmengUpdateAgent.setChannel(channel);
+        //UmengUpdateAgent.setUpdateOnlyWifi(false);
+        UmengUpdateAgent.setRichNotification(true);
         UpdateConfig.setDebug(true);
+
+//        UmengUpdateAgent.setDialogListener(new UmengDialogButtonListener() {
+//
+//            @Override
+//            public void onClick(int status) {
+//                switch (status) {
+//                    case UpdateStatus.Update:
+//                        break;
+//                    case UpdateStatus.Ignore:
+//                        UmengUpdateAgent.setUpdateUIStyle(UpdateStatus.STYLE_NOTIFICATION);
+//                        break;
+//                    case UpdateStatus.NotNow:
+//                        break;
+//                }
+//            }
+//        });
 
         UmengUpdateAgent.update(view);
     }
@@ -64,37 +81,37 @@ public class UmengTrackProvider {
         return enabled;
     }
 
-    public void resume(){
-        if (this.enabled){
+    public void resume() {
+        if (this.enabled) {
             MobclickAgent.onResume(this.context);
         }
     }
 
-    public void pause(){
-        if (this.enabled){
+    public void pause() {
+        if (this.enabled) {
             MobclickAgent.onPause(this.context);
         }
     }
 
-    public void pageStart(String tag){
-        if (this.enabled){
+    public void pageStart(String tag) {
+        if (this.enabled) {
             MobclickAgent.onPageStart(tag);
         }
     }
 
-    public void pageEnd(String tag){
-        if (this.enabled){
+    public void pageEnd(String tag) {
+        if (this.enabled) {
             MobclickAgent.onPageEnd(tag);
         }
     }
 
-    public void log(String eventId){
+    public void log(String eventId) {
         if (this.enabled) {
             MobclickAgent.onEvent(this.context, eventId);
         }
     }
 
-    public void log(String eventId, Map<String, String> params){
+    public void log(String eventId, Map<String, String> params) {
         if (this.enabled) {
             MobclickAgent.onEvent(this.context, eventId, params);
         }
