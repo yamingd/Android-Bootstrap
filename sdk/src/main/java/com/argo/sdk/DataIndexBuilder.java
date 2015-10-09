@@ -41,6 +41,9 @@ public class DataIndexBuilder<T extends DataIndexBuilder.DataIndex> {
     }
 
     public int compare(String lchsCode, String rchsCode) {
+        if (lchsCode.length() == 0 || rchsCode.length() == 0){
+            return -1;
+        }
 
         char lFirstLetter = lchsCode.charAt(0);
         char rFirstLetter = rchsCode.charAt(0);
