@@ -187,7 +187,8 @@ public class ProtobufReponseCallBack implements Callback {
         try {
             final byte[] input = response.body().bytes();
             if (xtag != null) {
-                builder.mergeFrom(input, securityTag, input.length - securityTag);
+                int count = Integer.parseInt(xtag);
+                builder.mergeFrom(input, count, input.length - count);
             }else{
                 builder.mergeFrom(input);
             }
