@@ -13,6 +13,7 @@ public abstract class AppBaseEvent implements Serializable {
     private Exception exception;
     private int errorCode = 0;
     private String message;
+    private boolean dataFromCache = true;
 
     public Exception getException() {
         return exception;
@@ -50,6 +51,14 @@ public abstract class AppBaseEvent implements Serializable {
         }
 
         return false;
+    }
+
+    public boolean isDataFromCache() {
+        return dataFromCache;
+    }
+
+    public void setDataFromCache(boolean dataFromCache) {
+        this.dataFromCache = dataFromCache;
     }
 
     /**
