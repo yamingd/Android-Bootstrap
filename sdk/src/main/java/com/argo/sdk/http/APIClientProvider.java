@@ -192,12 +192,12 @@ public class APIClientProvider {
     }
 
     /**
-     * 构造POST请求对象
+     * 构造POST、PUT、DELETE请求对象
      * @param pathUrl
      * @param params
      * @return
      */
-    private Request buildPOSTRequest(String pathUrl, Map<String, Object> params){
+    private Request buildRequest(String method, String pathUrl, Map<String, Object> params){
 
         String fullUrl = this.baseUrl + pathUrl;
         RequestBody body = null;
@@ -272,7 +272,7 @@ public class APIClientProvider {
 
         }
 
-        Request.Builder builder = new Request.Builder().url(fullUrl).post(body);
+        Request.Builder builder = new Request.Builder().url(fullUrl).method(method, body);
         wrapHttpHeader(builder, pathUrl);
         return builder.build();
     }
@@ -344,16 +344,66 @@ public class APIClientProvider {
      * @param url
      * @param params
      * @param apiCallback
-     * @return
+     * @return Call
      */
     public Call asyncPOST(final String url, Map<String, Object> params, final APICallback apiCallback){
 
-        final Request request = buildPOSTRequest(url, params);
+        final Request request = buildRequest("POST", url, params);
 
         Call call = client.newCall(request);
 
         this.wifiLock.acquire();
 
+
+        final ProtobufReponseCallBack responseCallback = new ProtobufReponseCallBack(appSession.get().getUserId(), url, apiCallback, request, this, call);
+        //callBackList.add(responseCallback);
+
+        call.enqueue(responseCallback);
+
+        return call;
+
+    }
+
+    /**
+     * 提交数据，支持文件、图片、音频.
+     * params的value为File对象
+     * @param url
+     * @param params
+     * @param apiCallback
+     * @return Call
+     */
+    public Call asyncPUT(final String url, Map<String, Object> params, final APICallback apiCallback){
+
+        final Request request = buildRequest("PUT", url, params);
+
+        Call call = client.newCall(request);
+
+        this.wifiLock.acquire();
+
+
+        final ProtobufReponseCallBack responseCallback = new ProtobufReponseCallBack(appSession.get().getUserId(), url, apiCallback, request, this, call);
+        //callBackList.add(responseCallback);
+
+        call.enqueue(responseCallback);
+
+        return call;
+
+    }
+
+    /**
+     * 删除数据.
+     * @param url
+     * @param params
+     * @param apiCallback
+     * @return Call
+     */
+    public Call asyncDelete(final String url, Map<String, Object> params, final APICallback apiCallback){
+
+        final Request request = buildRequest("DELETE", url, params);
+
+        Call call = client.newCall(request);
+
+        this.wifiLock.acquire();
 
         final ProtobufReponseCallBack responseCallback = new ProtobufReponseCallBack(appSession.get().getUserId(), url, apiCallback, request, this, call);
         //callBackList.add(responseCallback);
