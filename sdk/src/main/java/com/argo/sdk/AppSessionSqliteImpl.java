@@ -30,8 +30,8 @@ public class AppSessionSqliteImpl extends AppSessionAbstractImpl {
 
     public static final String UPDATE_APP_SESSION_SET_DATA_WHERE_KEY = "replace into app_session(key, data)values(?, ?)";
     public static final String SELECT_ALL = "select key, data from app_session";
-    final String insert = "insert into app_session(key, data)values(?, ?)";
-    final String init = "create table if not exists app_session(key text primary key, data blob) without rowid";
+    public static final String insert = "insert into app_session(key, data)values(?, ?)";
+    public static final String init = "create table if not exists app_session(key text primary key, data blob) without rowid";
 
     private SqliteContext sessionDb;
 
