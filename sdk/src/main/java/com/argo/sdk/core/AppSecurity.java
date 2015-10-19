@@ -72,4 +72,6 @@ public class AppSecurity {
     public native String decrypt(char[] data);
 
     public native void clean();
+
+    public native void init(String seed);
 }

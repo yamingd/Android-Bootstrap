@@ -7,6 +7,15 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/*
+ * Class:     com_inno_sdk_core_AppSecurity
+ * Method:    init
+ * Signature: ([B)[B
+ */
+JNIEXPORT void JNICALL Java_com_argo_sdk_core_AppSecurity_init
+        (JNIEnv *, jobject, jstring);
+
 /*
  * Class:     com_inno_sdk_core_AppSecurity
  * Method:    signSalt

@@ -15,13 +15,34 @@
 #include "logs.h"
 #include "base64.h"
 
-static const unsigned char salt[] = "&vKUnrpaCvL9gH&!";
-static const unsigned char iv[] = "&i973144334676&!";
+static unsigned char salt[] = "&vKUnrpaCvL9gH&!";
+static unsigned char iv[] =  "&i973144334676&!";
 static const unsigned char digits[] = "0123456789abcdef";
 static const unsigned char zeroPadding[] = "adf6916edc853858a8a03432f1bd99c3";
 
 void md5String(JNIEnv *env, const char *string, char outputBuffer[33]);
 void sha256String(const char *string, char outputBuffer[65]);
+
+JNIEXPORT void JNICALL Java_com_argo_sdk_core_AppSecurity_init
+        (JNIEnv *env, jobject obj, jstring seed){
+
+    const char* csecret = env->GetStringUTFChars(seed, 0);
+
+    char hash[65];
+    md5String(env, csecret, hash);
+
+    for (int i = 0; i < 16; ++i) {
+        salt[i] = hash[i * 2];
+    }
+
+    LOGD("init salt %s", salt);
+
+    for (int i = 0; i < 16; ++i) {
+        iv[i] = hash[i * 2 + 1];
+    }
+
+    LOGD("init iv %s", iv);
+}
 
 JNIEXPORT jbyteArray JNICALL Java_com_argo_sdk_core_AppSecurity_signSalt
   (JNIEnv *env, jobject obj, jbyteArray bytes){
