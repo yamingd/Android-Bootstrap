@@ -35,13 +35,13 @@ JNIEXPORT void JNICALL Java_com_argo_sdk_core_AppSecurity_init
         salt[i] = hash[i * 2];
     }
 
-    LOGD("init salt %s", salt);
+    //LOGD("AppSecurity init salt %s", salt);
 
     for (int i = 0; i < 16; ++i) {
         iv[i] = hash[i * 2 + 1];
     }
 
-    LOGD("init iv %s", iv);
+    //LOGD("AppSecurity init iv %s", iv);
 }
 
 JNIEXPORT jbyteArray JNICALL Java_com_argo_sdk_core_AppSecurity_signSalt
