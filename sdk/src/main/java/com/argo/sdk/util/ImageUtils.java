@@ -430,6 +430,10 @@ public final class ImageUtils {
      */
     public static Bitmap compress(final File file, int width, int quality, int maxSize){
         int osize = (int)(file.length());
+        if (osize <= maxSize){
+            return null;
+        }
+
         if (osize - maxSize <= compressGag || maxSize - osize <= compressGag){
             //在50K范围内可以不压缩
             return null;
@@ -492,6 +496,10 @@ public final class ImageUtils {
      */
     public static File compressFile(final File file, int width, int height, int quality, int maxSize, boolean verbose){
         int osize = (int)(file.length());
+        if (osize <= maxSize){
+            return file;
+        }
+
         int diff = osize > maxSize ? osize - maxSize : maxSize - osize;
         if (diff <= compressGag){
             //在50K范围内可以不压缩
