@@ -573,6 +573,26 @@ public final class ImageUtils {
         }
     }
 
+    public static byte[] getBytes(InputStream is) throws IOException {
+
+        int len;
+        int size = 1024;
+        byte[] buf;
+
+        if (is instanceof ByteArrayInputStream) {
+            size = is.available();
+            buf = new byte[size];
+            len = is.read(buf, 0, size);
+        } else {
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            buf = new byte[size];
+            while ((len = is.read(buf, 0, size)) != -1)
+                bos.write(buf, 0, len);
+            buf = bos.toByteArray();
+        }
+        return buf;
+    }
+
     /**
      * 压缩图片
      * @param uri
@@ -580,16 +600,28 @@ public final class ImageUtils {
      * @param quality
      * @return
      */
-    public static File compressUri(final  Context context, final Uri uri, int width, int height, int quality, int maxSize, boolean verbose) throws FileNotFoundException {
+    public static File compressUri(final  Context context, final Uri uri, int width, int height, int quality, int maxSize, boolean verbose) throws IOException {
+        File outFile = null;
 
         InputStream inputStream = context.getContentResolver().openInputStream(uri);
+        byte[] buffer = getBytes(inputStream);
+
+        int size = buffer.length;
+
+        if (size <= maxSize){
+            InputStream is = new ByteArrayInputStream(buffer);
+            outFile = getImageSavePath();
+            inputStreamToFile(outFile, is);
+            return outFile;
+        }
 
         BitmapFactory.Options bitmapOps = new BitmapFactory.Options();
         bitmapOps.inJustDecodeBounds = true;
-        decodeBitmap(inputStream, bitmapOps);
+
+        BitmapFactory.decodeByteArray(buffer, 0, size, bitmapOps);
 
         if (verbose) {
-            Timber.d("ImageUtils width: %d, height: %d", bitmapOps.outWidth, bitmapOps.outHeight);
+            Timber.d("ImageUtils size:%d width: %d, height: %d", size, bitmapOps.outWidth, bitmapOps.outHeight);
         }
 
         int diff = 0;
@@ -602,10 +634,7 @@ public final class ImageUtils {
                     bitmapOps.outWidth, bitmapOps.outHeight,
                     bitmapOps);
 
-            File outFile = null;
-
-            inputStream = context.getContentResolver().openInputStream(uri);
-            bitmap = decodeBitmap(inputStream, bitmapOps);
+            bitmap = BitmapFactory.decodeByteArray(buffer, 0, size, bitmapOps);
             if (bitmap == null) {
                 Timber.e("ImageUtils compressStream, bitmap is NULL, %s", outFile);
                 return null;
@@ -642,8 +671,6 @@ public final class ImageUtils {
 
         } catch (OutOfMemoryError ignore) {
             return compressUri(context, uri, width, height, quality - compressStep, maxSize, verbose);
-        } catch (IOException e) {
-            return null;
         } finally {
             if (bitmap != null){
                 bitmap.recycle();
