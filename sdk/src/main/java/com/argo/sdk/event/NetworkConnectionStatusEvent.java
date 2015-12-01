@@ -6,9 +6,18 @@ package com.argo.sdk.event;
 public class NetworkConnectionStatusEvent extends AppBaseEvent {
 
     private boolean available = false;
+    private boolean wifi = false;
 
     public NetworkConnectionStatusEvent(boolean available) {
         this.available = available;
+    }
+
+    public boolean isWifi() {
+        return wifi;
+    }
+
+    public void setWifi(boolean wifi) {
+        this.wifi = wifi;
     }
 
     public boolean isAvailable() {

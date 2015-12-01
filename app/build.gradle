@@ -139,6 +139,12 @@ dependencies {
     apt 'com.google.dagger:dagger-compiler:2.0.1'
     provided 'org.glassfish:javax.annotation:10.0-b28'
 
+    compile 'com.github.yamingd.android:bootstrap:2.0.1@aar'
+    compile 'com.github.yamingd.android:sqlite-annotation:1.1.0'
+    compile 'com.github.yamingd.android:sqlite-mapper:1.2.2@aar'
+
+    apt 'com.github.yamingd.android:sqlite-compiler:1.2.0'
+
     compile 'com.koushikdutta.async:androidasync:2.+'
     // https://github.com/hdodenhof/CircleImageView
     compile 'de.hdodenhof:circleimageview:1.3.0'
@@ -157,5 +163,10 @@ dependencies {
     androidTestCompile 'junit:junit:4.11'
     //androidTestCompile 'org.hamcrest:hamcrest-library:1.3'
     //androidTestCompile 'org.mockito:mockito-core:1.9.5'
-    compile project(':sdk')
+}
+
+ext {
+    uploadArchive=false
+    artifactId = 'appdemo'
+    groupId = 'com.github.yamingd.android'
 }

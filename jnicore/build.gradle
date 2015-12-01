@@ -18,13 +18,27 @@ android {
     }
 
     buildTypes {
+        debug {
+            apply plugin: 'checkstyle'
+        }
         release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            apply plugin: 'checkstyle'
         }
     }
 
+    lintOptions {
+        disable 'InvalidPackage'
+    }
+
+    packagingOptions {
+        // Exclude file to avoid
+        // Error: Duplicate files during packaging of APK
+        exclude 'META-INF/services/javax.annotation.processing.Processor'
+        exclude 'README.txt'
+    }
+
     productFlavors {
+
         armeabi{
             ndk {
                 ldLibs "log", "m", "jnigraphics", file('src/main/jniLibs/armeabi').absolutePath + "/libkcrypto.so"
@@ -79,3 +93,32 @@ tasks['releaseJNI'].dependsOn tasks['build'] //only run after build (doesn't wor
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
 }
+
+ext {
+    uploadArchive=true
+    artifactId = 'jniboot'
+    groupId = 'com.github.yamingd.android'
+}
+
+version = '2.0.1'
+
+task sourcesJar(type: Jar) {
+    from android.sourceSets.main.java.srcDirs
+    classifier = 'sources'
+}
+
+task javadoc(type: Javadoc) {
+    source = []
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives javadocJar
+    archives sourcesJar
+}
+
+apply from: '../maven_push.gradle'

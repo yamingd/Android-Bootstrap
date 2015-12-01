@@ -1,1 +1,1 @@
-include ':app', ':sdk', ':jnicore'
+include ':sdk', ':jnicore'

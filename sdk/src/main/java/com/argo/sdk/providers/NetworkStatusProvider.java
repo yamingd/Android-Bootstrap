@@ -78,13 +78,12 @@ public class NetworkStatusProvider extends BroadcastReceiver implements Closeabl
         NetworkInfo mWifi = this.connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
         NetworkInfo mMobile = this.connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
 
-        if ((mWifi != null) && ((mWifi.isAvailable()) || (mMobile.isAvailable()))) {
-            if ((mWifi.isConnected()) || (mMobile.isConnected())) {
-                networkAvailable = true;
-            }
-            if (mWifi.isConnected()){
-                wifiAvailable = true;
-            }
+        if (mWifi != null && mWifi.isAvailable()) {
+            networkAvailable = true;
+            wifiAvailable = true;
+        }if (mMobile != null && mMobile.isAvailable()) {
+            wifiAvailable = false;
+            networkAvailable = true;
         }else {
             wifiAvailable = false;
             networkAvailable = false;
@@ -118,7 +117,9 @@ public class NetworkStatusProvider extends BroadcastReceiver implements Closeabl
 
         if (!lastStatus && this.connectionAvailable){
             Timber.e("Connection Done.");
-            bus.post(new NetworkConnectionStatusEvent(true));
+            final NetworkConnectionStatusEvent event = new NetworkConnectionStatusEvent(true);
+            event.setWifi(this.isWifiAvailable());
+            bus.post(event);
         }
     }
 
