@@ -95,7 +95,7 @@ dependencies {
 }
 
 ext {
-    uploadArchive=true
+    uploadArchive=false
     artifactId = 'jniboot'
     groupId = 'com.github.yamingd.android'
 }

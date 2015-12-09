@@ -3,11 +3,10 @@ package com.argo.sdk;
 import android.content.Context;
 import android.net.ConnectivityManager;
 
+import com.argo.sdk.cache.CacheProvider;
 import com.argo.sdk.event.EventBus;
 import com.argo.sdk.providers.DeadEventTracker;
 import com.argo.sdk.providers.NetworkStatusProvider;
-import com.argo.sdk.cache.CacheProvider;
-import com.argo.sdk.providers.LocationStatusProvider;
 import com.squareup.otto.Bus;
 import com.squareup.picasso.Picasso;
 
@@ -45,12 +44,6 @@ public class BootstrapModule {
     @Provides
     NetworkStatusProvider provideNetworkStatusProvider(final Context context, ConnectivityManager connectivityManager, Bus bus){
         return new NetworkStatusProvider(context, connectivityManager, bus);
-    }
-
-    @Singleton
-    @Provides
-    LocationStatusProvider provideLocationStatusProvider(final Context context, Bus bus){
-        return new LocationStatusProvider(context, bus);
     }
 
     @Singleton

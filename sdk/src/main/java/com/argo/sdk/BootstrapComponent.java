@@ -15,7 +15,6 @@ import android.view.inputmethod.InputMethodManager;
 import com.argo.sdk.providers.DeadEventTracker;
 import com.argo.sdk.providers.NetworkStatusProvider;
 import com.argo.sdk.cache.CacheProvider;
-import com.argo.sdk.providers.LocationStatusProvider;
 import com.squareup.otto.Bus;
 import com.squareup.picasso.Picasso;
 
@@ -54,7 +53,6 @@ public interface BootstrapComponent {
     DeadEventTracker deadEventTracker();
     CacheProvider cacheProvider();
     NetworkStatusProvider networkStatusProvider();
-    LocationStatusProvider locationStatusProvider();
     FlashBucket flashBucket();
     Picasso picasso();
 }
