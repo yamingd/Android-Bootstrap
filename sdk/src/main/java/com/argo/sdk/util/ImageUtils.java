@@ -446,7 +446,7 @@ public final class ImageUtils {
 
         Timber.d("ImageUtils width: %d, height: %d", bitmapOps.outWidth, bitmapOps.outHeight);
 
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        ByteArrayOutputStream os = new ByteArrayOutputStream(osize);
         try {
 
             calculateInSampleSize(width, width,
@@ -518,7 +518,7 @@ public final class ImageUtils {
         }
 
         Bitmap bitmap = null;
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        ByteArrayOutputStream os = new ByteArrayOutputStream(osize);
         try {
 
             calculateInSampleSize(width, height,
