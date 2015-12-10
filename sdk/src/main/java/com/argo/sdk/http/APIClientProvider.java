@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import okio.BufferedSink;
 import okio.Okio;
@@ -55,6 +56,7 @@ public class APIClientProvider {
     public static final String X_TAG = "X-tag";
 
     public static APIClientProvider instance = null;
+
 
     private final static Map<String, String> MIME = new ArrayMap<>();
 
@@ -78,6 +80,7 @@ public class APIClientProvider {
     private WifiManager.WifiLock wifiLock;
     private int securityTag = 16;
     private List<ProtobufReponseCallBack> callBackList = new ArrayList<>();
+    private AtomicLong byteDataId = new AtomicLong();
 
     public APIClientProvider(AppSession appSession, UserAgentProvider userAgentProvider, Context context, CacheProvider cacheProvider, WifiManager wifiManager){
         this.appSession = appSession;
@@ -184,7 +187,7 @@ public class APIClientProvider {
         }else if (o instanceof  byte[]){
             byte[] tmp = (byte[])o;
             RequestBody file = RequestBody.create(MEDIA_TYPE_DEFAULT, tmp);
-            multipartBuilder.addFormDataPart(key, System.currentTimeMillis() / 1000 + "", file);
+            multipartBuilder.addFormDataPart(key, byteDataId.incrementAndGet() + "", file);
         }
         else{
             multipartBuilder.addFormDataPart(key, o.toString());
@@ -267,7 +270,7 @@ public class APIClientProvider {
         }else{
 
             FormEncodingBuilder formEncodingBuilder = new FormEncodingBuilder();
-            formEncodingBuilder.add("_utm_", System.currentTimeMillis() / 1000 + "");
+            formEncodingBuilder.add("_utm_", System.currentTimeMillis() + "");
             body = formEncodingBuilder.build();
 
         }

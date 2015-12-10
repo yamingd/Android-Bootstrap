@@ -553,8 +553,7 @@ public final class ImageUtils {
                         Timber.d("ImageUtils decode out size: %d bytes", length);
                     }
                     outFile = new File(file.getAbsolutePath() + ".500" + TYPE_NAME);
-                    InputStream is = new ByteArrayInputStream(os.toByteArray());
-                    inputStreamToFile(outFile, is);
+                    bytesToFile(outFile, os.toByteArray());
                 }
             }
 
@@ -626,8 +625,7 @@ public final class ImageUtils {
 
         int diff = 0;
         Bitmap bitmap = null;
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-
+        ByteArrayOutputStream os = new ByteArrayOutputStream(size);
         try {
 
             calculateInSampleSize(width, height,
@@ -660,9 +658,8 @@ public final class ImageUtils {
                     if (verbose) {
                         Timber.d("ImageUtils decode out size: %d bytes", length);
                     }
-                    InputStream is = new ByteArrayInputStream(os.toByteArray());
                     outFile = getImageSavePath();
-                    inputStreamToFile(outFile, is);
+                    bytesToFile(outFile, os.toByteArray());
                     done = true;
                 }
             }
@@ -674,16 +671,19 @@ public final class ImageUtils {
         } finally {
             if (bitmap != null){
                 bitmap.recycle();
+                bitmap = null;
             }
             if (inputStream != null){
                 try {
                     inputStream.close();
+                    inputStream = null;
                 } catch (IOException e) {
 
                 }
             }
             try {
                 os.close();
+                os = null;
             } catch (IOException ignore) {
             }
         }
@@ -736,6 +736,27 @@ public final class ImageUtils {
         } finally {
             try {
                 is.close();
+            } catch (IOException ignore) {
+            }
+        }
+    }
+
+    public static void bytesToFile(File file, byte[] datas) {
+        FileOutputStream os = null;
+        try {
+            os = new FileOutputStream(file);
+        } catch (FileNotFoundException e) {
+            return;
+        }
+
+        try {
+            os.write(datas);
+            os.flush();
+        } catch (IOException e) {
+            Timber.e(e, "inputStreamToFile Error. %s", file);
+        } finally {
+            try {
+                os.close();
             } catch (IOException ignore) {
             }
         }
