@@ -20,6 +20,7 @@ import javax.inject.Singleton;
 
 import dagger.Module;
 import dagger.Provides;
+import timber.log.Timber;
 
 /**
  * Module for all Android related provisions
@@ -70,7 +71,13 @@ public class AndroidModule {
     @Provides
     @Singleton
     ApplicationInfo provideApplicationInfo(final Context context) {
-        return context.getApplicationInfo();
+        ApplicationInfo appInfo = null;
+        try {
+            appInfo = context.getPackageManager().getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA);
+        } catch (PackageManager.NameNotFoundException e) {
+            Timber.e(e, "provideApplicationInfo Error");
+        }
+        return appInfo;
     }
 
     @Provides
