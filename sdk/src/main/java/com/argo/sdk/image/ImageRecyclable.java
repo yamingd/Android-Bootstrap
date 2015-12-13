@@ -1,4 +1,4 @@
-package com.argo.sdk.ui;
+package com.argo.sdk.image;
 
 /**
  * 可回收的ImageView
