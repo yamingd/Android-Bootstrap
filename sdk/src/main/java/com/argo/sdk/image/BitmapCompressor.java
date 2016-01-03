@@ -51,7 +51,7 @@ public class BitmapCompressor {
         void onBitmapCompressError(Exception exception);
     }
 
-    public class Options{
+    public static class Options{
         private boolean verbose;
         private File sourceFile;
         private Uri sourceUri;
@@ -384,7 +384,7 @@ public class BitmapCompressor {
                     BitmapHandler.save(outFile, os.toByteArray());
                     done = true;
                     if (null != listener){
-                        listener.onBitmapCompressing(options.getQuality());
+                        listener.onBitmapCompressDone(options.getQuality());
                     }
                 }
             }

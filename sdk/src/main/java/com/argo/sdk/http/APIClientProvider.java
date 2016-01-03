@@ -188,6 +188,7 @@ public class APIClientProvider {
             byte[] tmp = (byte[])o;
             RequestBody file = RequestBody.create(MEDIA_TYPE_DEFAULT, tmp);
             multipartBuilder.addFormDataPart(key, byteDataId.incrementAndGet() + "", file);
+            Timber.d("Media Type. byte[], %s", file.contentType());
         }
         else{
             multipartBuilder.addFormDataPart(key, o.toString());
@@ -221,7 +222,10 @@ public class APIClientProvider {
                     List list = (List) o;
                     for (int i = 0; i < list.size(); i++) {
                         Object o2 = list.get(i);
-                        if (null != o2 && o2 instanceof File){
+                        if (null == o2){
+                            continue;
+                        }
+                        if (o2 instanceof File || o2 instanceof byte[]){
                             hasFile = true;
                             break;
                         }
@@ -244,6 +248,9 @@ public class APIClientProvider {
                         List list = (List) o;
                         for (int i = 0; i < list.size(); i++) {
                             Object o2 = list.get(i);
+                            if (null == o2){
+                                continue;
+                            }
                             addPart(multipartBuilder, key, o2);
                         }
                     }else if (o instanceof  Map){
