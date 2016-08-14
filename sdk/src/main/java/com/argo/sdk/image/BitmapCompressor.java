@@ -315,7 +315,7 @@ public class BitmapCompressor {
 
         InputStream inputStream = getInputStream(context, options);
         int size = getSize(inputStream);
-
+        Timber.d("compress. uri=%s, size=%s, inputStream=%s", options.getSourceUri(), size, inputStream != null);
         if (size <= options.getMaxSize()){
             inputStream = getInputStream(context, options);
             outFile = BitmapHandler.getSavePath();
@@ -371,21 +371,24 @@ public class BitmapCompressor {
                 }
 
                 if (diff > compressGag) {
-                    os.reset();
                     options.setQuality(options.getQuality() - compressGag);
                     if (null != listener){
                         listener.onBitmapCompressing(options.getQuality());
                     }
-                } else {
-                    if (options.isVerbose()) {
-                        Timber.d("ImageUtils decode out size: %d bytes", length);
+                    if (options.getQuality() > 0){
+                        os.reset();
+                        continue;
                     }
-                    outFile = BitmapHandler.getSavePath();
-                    BitmapHandler.save(outFile, os.toByteArray());
-                    done = true;
-                    if (null != listener){
-                        listener.onBitmapCompressDone(options.getQuality());
-                    }
+                }
+
+                if (options.isVerbose()) {
+                    Timber.d("ImageUtils decode out size: %d bytes", length);
+                }
+                outFile = BitmapHandler.getSavePath();
+                BitmapHandler.save(outFile, os.toByteArray());
+                done = true;
+                if (null != listener){
+                    listener.onBitmapCompressDone(options.getQuality());
                 }
             }
 

@@ -8,8 +8,8 @@ android {
     defaultConfig {
         minSdkVersion 15
         targetSdkVersion 21
-        versionCode 15120901
-        versionName "2.0.6"
+        versionCode 16081301
+        versionName "2.1.0"
     }
 
     compileOptions {
@@ -43,7 +43,7 @@ dependencies {
     compile 'com.android.support:support-v4:21.0.0'
     // Logging
     compile 'com.jakewharton.timber:timber:3.1.0'
-    compile 'com.google.protobuf:protobuf-java:2.5.0'
+    compile 'com.google.protobuf:protobuf-java:2.6.1'
     // dagger
     compile 'com.google.dagger:dagger:2.0.1'
     apt 'com.google.dagger:dagger-compiler:2.0.1'
@@ -80,7 +80,7 @@ ext {
     groupId = 'com.github.yamingd.android'
 }
 
-version = '2.0.6'
+version = '2.1.0'
 
 task sourcesJar(type: Jar) {
     from android.sourceSets.main.java.srcDirs
