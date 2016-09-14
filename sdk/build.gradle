@@ -80,7 +80,7 @@ ext {
     groupId = 'com.github.yamingd.android'
 }
 
-version = '2.1.0'
+version = '2.2.0'
 
 task sourcesJar(type: Jar) {
     from android.sourceSets.main.java.srcDirs

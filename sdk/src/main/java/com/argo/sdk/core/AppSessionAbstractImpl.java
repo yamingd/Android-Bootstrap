@@ -13,7 +13,6 @@ import com.argo.sdk.http.APIClientProvider;
 import com.argo.sdk.protobuf.PAppSession;
 import com.argo.sdk.util.HMAC;
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.argo.sdk.util.Strings;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -31,6 +30,8 @@ public abstract class AppSessionAbstractImpl implements AppSession {
     public static final String GUEST = "Guest";
     public static final Charset UTF_8 = Charset.forName("UTF-8");
     public static final String DB_BASE = "base";
+    public static final String APP_UMENG_ENABLE = "AppUMengEnable";
+    public static final String APP_APNS = "AppApns";
 
     protected ApplicationInfo appInfo;
 
@@ -66,7 +67,7 @@ public abstract class AppSessionAbstractImpl implements AppSession {
 
     private String cookieId = null;
     private String cookieSecret = null;
-
+    private DeviceUuidFactory deviceUuidFactory = null;
     /**
      * 构造函数
      * @param context
@@ -80,6 +81,7 @@ public abstract class AppSessionAbstractImpl implements AppSession {
         this.packageInfo = packageInfo;
         this.telephonyManager = telephonyManager;
         this.appSecurity = appSecurity;
+        this.deviceUuidFactory = new DeviceUuidFactory(context);
 
         this.initAppSessionDb();
 
@@ -91,8 +93,6 @@ public abstract class AppSessionAbstractImpl implements AppSession {
         cookieSecret = config.get("CookieSecret") + "";
 
         initHeaders();
-
-        // Timber.d("Session: %s", current.toString());
 
     }
 
@@ -124,15 +124,23 @@ public abstract class AppSessionAbstractImpl implements AppSession {
         builder.setUserKind(userKind);
         builder.setRealName(realName);
         builder.setProfileImageUrl(profileImageUrl);
-        builder.setSessionId(System.currentTimeMillis() / 1000 + "");
         builder.setUserDemo(demo ? 1 : 0);
         current = builder.build();
         save();
-        initHeaders();
+        onSessionChanged();
+    }
 
-        if (APIClientProvider.instance != null){
-            APIClientProvider.instance.resetHeaders();
-        }
+    @Override
+    public void resetSessionId(String sessionId) {
+        PAppSession.Builder builder = getBuilder();
+        builder.setSessionId(sessionId);
+        current = builder.build();
+        onSessionChanged();
+    }
+
+    private void setSessionId(){
+        String str = String.format("%s:%s:%s", System.currentTimeMillis() / 1000, getBuilder().getDeviceId(), getBuilder().getAppName());
+        getBuilder().setSessionId(HMAC.md5(str));
     }
 
     /**
@@ -147,8 +155,7 @@ public abstract class AppSessionAbstractImpl implements AppSession {
             PAppSession.Builder builder = getBuilder();
             wrapDevice(builder);
             wrapTestUser(builder);
-            builder.setSessionId(System.currentTimeMillis() / 1000 + "");
-
+            setSessionId();
             current = builder.build();
             save();
 
@@ -175,7 +182,7 @@ public abstract class AppSessionAbstractImpl implements AppSession {
      * wrap device info into Session
      */
     private void wrapDevice(PAppSession.Builder builder){
-        builder.setDeviceId(getIMEI());
+        builder.setDeviceId(deviceUuidFactory.getDeviceUuid().toString());
         builder.setAppName(BootConstants.APP_NAME);
         builder.setPackageVersion(packageInfo.versionName);
         builder.setPackageName(BootConstants.APP_NAME);
@@ -186,32 +193,6 @@ public abstract class AppSessionAbstractImpl implements AppSession {
     }
 
     /**
-     * 获取设备ID
-     * @return
-     */
-    public String getIMEI(){
-        //获取imei
-        String imei_id = telephonyManager.getDeviceId();
-        if(Strings.isEmpty(imei_id)){
-            //获取smi
-            imei_id = telephonyManager.getSimSerialNumber();
-            //如果无法获取，用默认
-            if(Strings.isEmpty(imei_id)){
-                imei_id = "default-imei";
-            }
-        }
-        return imei_id;
-    }
-
-    private String checkValue(String str) {
-        if ((str == null) || (str.length() == 0)) {
-            return "'TM.ERROR'";
-        }
-
-        return "\"" + str + "\"";
-    }
-
-    /**
      * load config from disk.
      */
     protected void initConfig(AppSessionData item){
@@ -219,8 +200,8 @@ public abstract class AppSessionAbstractImpl implements AppSession {
         byte[] value = item.getData();
         String str = new String(value, UTF_8);
 
-        if ("AppUMengEnable".equalsIgnoreCase(item.getKey()) ||
-                "AppApns".equalsIgnoreCase(item.getKey())){
+        if (APP_UMENG_ENABLE.equalsIgnoreCase(item.getKey()) ||
+                APP_APNS.equalsIgnoreCase(item.getKey())){
 
             config.put(item.getKey(), Boolean.valueOf(str));
 
@@ -253,11 +234,7 @@ public abstract class AppSessionAbstractImpl implements AppSession {
     @Override
     public void clear(){
         newAnonymousUser(getBuilder());
-        initHeaders();
-
-        if (APIClientProvider.instance != null){
-            APIClientProvider.instance.resetHeaders();
-        }
+        onSessionChanged();
     }
 
     /**
@@ -270,10 +247,17 @@ public abstract class AppSessionAbstractImpl implements AppSession {
         builder.setUserKind(0);
         builder.setRealName(GUEST);
         builder.setProfileImageUrl("");
-        builder.setSessionId(System.currentTimeMillis() / 1000 + "");
         wrapTestUser(builder);
+        setSessionId();
         current = builder.build();
         save();
+    }
+
+    private void onSessionChanged(){
+        initHeaders();
+        if (APIClientProvider.instance != null){
+            APIClientProvider.instance.resetHeaders();
+        }
     }
 
     /**

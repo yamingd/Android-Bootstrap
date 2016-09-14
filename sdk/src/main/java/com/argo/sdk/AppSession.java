@@ -34,6 +34,11 @@ public interface AppSession extends Closeable, Provider<PAppSession> {
     void remember(long userId, String userName, String realName, int userKind, String profileImageUrl, boolean demo);
 
     /**
+     * 重置会话id
+     * @param sessionId
+     */
+    void resetSessionId(String sessionId);
+    /**
      *
      */
     void clear();
